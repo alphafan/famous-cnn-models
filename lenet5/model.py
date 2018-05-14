@@ -111,8 +111,7 @@ class LeNet5(object):
                 datetime.now(), i,
                 *sess.run(
                     (loss, accuracy),
-                    feed_dict={self.X: X_validation, self.y: y_validation})
-            )
+                    feed_dict={self.X: X_validation, self.y: y_validation}))
             )
 
         ##########################################################################
@@ -124,8 +123,7 @@ class LeNet5(object):
         print('\n{} Test Result: Loss: {} Accuracy: {}\n'.format(
             datetime.now(), *sess.run(
                 (loss, accuracy),
-                feed_dict={self.X: X_test, self.y: y_test})
-        )
+                feed_dict={self.X: X_test, self.y: y_test}))
         )
 
         sess.close()
