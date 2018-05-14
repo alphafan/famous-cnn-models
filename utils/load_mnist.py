@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 
 import numpy as np
-import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 ##########################################################################
@@ -12,17 +11,11 @@ from tensorflow.examples.tutorials.mnist import input_data
 # - Data Shuffling
 ##########################################################################
 
-# Set logging to Error to ignore some depreciated warnings ...
-tf.logging.set_verbosity(tf.logging.ERROR)
-
 print(datetime.now(), 'Downloading MNIST dataset \n')
 
 # Download mnist data to directory
 dataDir = os.path.join(str(Path(__file__).absolute().parent.parent), 'mnist')
 mnist = input_data.read_data_sets(dataDir, one_hot=True, reshape=False)
-
-# Resume to logging level
-tf.logging.set_verbosity(tf.logging.INFO)
 
 # Split data into train / test / validation
 X_train, y_train = mnist.train.images, mnist.train.labels

@@ -8,6 +8,7 @@ class AlexNet(object):
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 32, 32, 1), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 10), name='label')
+        self.url = 'http://image-net.org/imagenet_data/urls/imagenet_fall11_urls.tgz'
 
     def run(self):
         pass
