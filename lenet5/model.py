@@ -12,13 +12,11 @@ class LeNet5(object):
     def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 32, 32, 1), name='image')
-        self.y = tf.placeholder(dtype=tf.float32, shape=(None, 10), name='label')
+        self.y = tf.placeholder(dtype=tf.float32, shape=(None, 10),        name='label')
         # Training process related params
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
         self.batch_size = batch_size
-        # Session for training this model
-        self.sess = tf.Session()
 
     def run(self):
         """ Forward propagation process of LeNet5 model
@@ -46,13 +44,13 @@ class LeNet5(object):
         # ==> Layer 1:
         #   - a) Convolution:       Input 32 * 32 * 1 , Output 28 * 28 * 6
         #   - b) Subsampling:       Input 28 * 28 * 6 , Output 14 * 14 * 6
-        conv_1 = tf.layers.conv2d(self.X, filters=6, kernel_size=5)
+        conv_1 = tf.layers.conv2d       (self.X, filters=6, kernel_size=5)
         pool_1 = tf.layers.max_pooling2d(conv_1, pool_size=2, strides=2)
 
         # ==> Layer 2:
         #   - a) Convolution:       Input 14 * 14 * 6 , Output 10 * 10 * 16
         #   - b) Subsampling:       Input 10 * 10 * 16, Output 5  * 5  * 16
-        conv_2 = tf.layers.conv2d(pool_1, filters=16, kernel_size=5)
+        conv_2 = tf.layers.conv2d       (pool_1, filters=16, kernel_size=5)
         pool_2 = tf.layers.max_pooling2d(conv_2, pool_size=2, strides=2)
 
         # Flatten
@@ -76,9 +74,9 @@ class LeNet5(object):
         ##########################################################################
 
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=full_3)
-        loss = tf.reduce_mean(cross_entropy)
-        optimizer = tf.train.AdamOptimizer(self.learning_rate)
-        train = optimizer.minimize(loss)
+        loss          = tf.reduce_mean(cross_entropy)
+        optimizer     = tf.train.AdamOptimizer(self.learning_rate)
+        train         = optimizer.minimize(loss)
 
         ##########################################################################
         # Compute accuracy
@@ -120,6 +118,7 @@ class LeNet5(object):
         # Compute accuracy on test set
         ##########################################################################
 
+        # Evaluate on test set
         print(datetime.now(), 'Evaluating LeNet5 model on test set')
         print('\n{} Test Result: Loss: {} Accuracy: {}\n'.format(
             datetime.now(), *sess.run(
