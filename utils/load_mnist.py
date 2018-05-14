@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 
 import numpy as np
-import sklearn.utils
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
@@ -38,10 +37,5 @@ X_validation = np.pad(X_validation, ((0, 0), (2, 2), (2, 2), (0, 0)), 'constant'
 
 print()
 print(datetime.now(), 'Training data shapes')
-print('Input Shape  :', np.shape(X_train))
+print('Input  Shape :', np.shape(X_train))
 print('Output Shape :', np.shape(y_train))
-
-# Shuffle train data
-print()
-print(datetime.now(), 'Shuffling dataset')
-X_train, y_train = sklearn.utils.shuffle(X_train, y_train, random_state=0)
