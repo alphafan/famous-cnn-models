@@ -44,14 +44,14 @@ class LeNet5(object):
         # ==> Layer 1:
         #   - a) Convolution:       Input 32 * 32 * 1 , Output 28 * 28 * 6
         #   - b) Subsampling:       Input 28 * 28 * 6 , Output 14 * 14 * 6
-        conv_1 = tf.layers.conv2d       (self.X, filters=6, kernel_size=5)
-        pool_1 = tf.layers.max_pooling2d(conv_1, pool_size=2, strides=2)
+        conv_1 = tf.layers.conv2d        (self.X, filters=6, kernel_size=5)
+        pool_1 = tf.layers.max_pooling2d (conv_1, pool_size=2, strides=2)
 
         # ==> Layer 2:
         #   - a) Convolution:       Input 14 * 14 * 6 , Output 10 * 10 * 16
         #   - b) Subsampling:       Input 10 * 10 * 16, Output 5  * 5  * 16
-        conv_2 = tf.layers.conv2d       (pool_1, filters=16, kernel_size=5)
-        pool_2 = tf.layers.max_pooling2d(conv_2, pool_size=2, strides=2)
+        conv_2 = tf.layers.conv2d        (pool_1, filters=16, kernel_size=5)
+        pool_2 = tf.layers.max_pooling2d (conv_2, pool_size=2, strides=2)
 
         # Flatten
         #   - a) Flatten:           Input 5  * 5  * 16, Output 400
