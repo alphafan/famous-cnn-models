@@ -1,10 +1,12 @@
 import os
 import tarfile
-import gzip
+import multiprocessing as mp
 
 from pathlib import Path
 import requests
 from tqdm import tqdm
+import string
+import random
 
 # ImageNet WordNet ID --> image urls mappings download path
 # ..
@@ -45,46 +47,57 @@ def load_data(num_images=200, reshape_as=(227, 227)):
     """
     # Download files if not exists
     if not os.path.exists(image_net_urls_file) or os.path.getsize(image_net_urls_file) != 350302759:
-        _download_img_urls()
+        download_img_urls()
         assert os.path.getsize(image_net_urls_file) == 350302759
     if not os.path.exists(image_net_word_file) or os.path.getsize(image_net_word_file) != 2655750:
-        _download_word_file()
+        download_word_file()
         assert os.path.getsize(image_net_word_file) == 2655750
 
     # Extract datasets
+    print('Extracting urls from imagenet_fall11_urls.tgz...')
+    url2name = {}
     with tarfile.open(image_net_urls_file) as tar:
-        print('Extracting imagenet_fall11_urls.tgz...')
         f = tar.extractfile('fall11_urls.txt')
-        print('Downloading images...')
-        for i in range(num_images):
-            image_id, image_url = f.readline().decode().strip().split('\t')
-            r = requests.get(image_url, stream=True)
-            with open(os.path.join(image_net_image_dir, image_id+'.jpg'), 'wb') as img:
-                total_length = int(r.headers.get('content-length'))
-                for chunk in tqdm(r.iter_content(chunk_size=1024), total=(total_length / 1024) + 1, unit='KB'):
-                    img.write(chunk)
-                    img.flush()
-            print('Downloading', image_id, image_url)
+        count = 0
+        while count < num_images:
+            filename, url = f.readline().decode().strip().split('\t')
+            url2name[url] = filename
+            count += 1
+
+    # Download Images ...
+    print('Parallel Downloading Images from Urls...')
+    pool = mp.Pool(4)
+    download_jobs = [pool.apply_async(download_image, (url, filename, )) for url, filename in url2name.items()]
+    [job.get() for job in download_jobs]
 
 
-def _download_img_urls():
+def download_image(url, filename):
+    try:
+        print('Downloading', filename, 'from', url, '...')
+        with open(os.path.join(image_net_image_dir, filename+'.jpg'), 'wb') as f:
+            f.write(requests.get(url).content)
+    except ConnectionError:
+        print('Download Failed', url)
+
+
+def download_img_urls():
     print('Downloading Image Net WID -> Image Urls Mappings file...')
     r = requests.get(wids_url, stream=True)
     with open(image_net_urls_file, 'wb') as f:
         total_length = int(r.headers.get('content-length'))
         print('Total content length :', total_length)
-        for chunk in tqdm(r.iter_content(chunk_size=1024), total=(total_length/1024)+1, unit='KB'):
+        for chunk in tqdm(r.iter_content(chunk_size=1024), total=(total_length / 1024) + 1, unit='KB'):
             f.write(chunk)
             f.flush()
 
 
-def _download_word_file():
+def download_word_file():
     print('Downloading Image Net WID -> Object Type Mappings file...')
     r = requests.get(word_url, stream=True)
     with open(image_net_word_file, 'wb') as f:
         total_length = int(r.headers.get('content-length'))
         print('Total content length :', total_length)
-        for chunk in tqdm(r.iter_content(chunk_size=1024), total=(total_length/1024)+1, unit='KB'):
+        for chunk in tqdm(r.iter_content(chunk_size=1024), total=(total_length / 1024) + 1, unit='KB'):
             f.write(chunk)
             f.flush()
 
