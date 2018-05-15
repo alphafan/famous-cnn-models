@@ -109,6 +109,7 @@ def get_url2name():
     return url2name
 
 
+# Url -> file name mapping
 url2name = get_url2name()
 print('ImageNet contains {} images in total'.format(len(url2name)))
 
