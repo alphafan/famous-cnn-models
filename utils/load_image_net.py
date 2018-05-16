@@ -160,7 +160,7 @@ if len(os.listdir(image_net_image_dir)) < 7000:
         job.get()
 
 
-print('There are {} images downloaded.',format(len(os.listdir(image_net_image_dir))))
+print('There are {} images downloaded.'.format(len(os.listdir(image_net_image_dir))))
 
 
 ##########################################################################
