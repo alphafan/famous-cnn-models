@@ -19,7 +19,9 @@ class LeNet5(object):
         self.batch_size = batch_size
 
     def run(self):
-        """ Forward propagation process of LeNet5 model
+        """
+        Run forward/backward propagation process of LeNet5 model
+        Evaluate on test set, get 98.5% accuracy.
 
         # Layer 1:
         #   - a) Convolution:       Input 32 * 32 * 1 , Output 28 * 28 * 6
