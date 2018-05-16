@@ -4,6 +4,8 @@ import tarfile
 from pathlib import Path
 import requests
 from tqdm import tqdm
+import aiohttp
+import asyncio
 
 ##########################################################################
 # Two Files are given by ImageNet Website to download
@@ -46,10 +48,6 @@ if not os.path.exists(image_net_image_dir):
     os.makedirs(image_net_image_dir)
 
 
-print('Size of wid -> urls file : {:8.2f} Mb'.format(os.path.getsize(image_net_urls_file)/1024/1024))
-print('Size of wid -> word file : {:8.2f} Mb'.format(os.path.getsize(image_net_word_file)/1024/1024))
-
-
 ##########################################################################
 # 2. Download two files given by ImageNet
 ##########################################################################
@@ -60,7 +58,6 @@ def download_wid2urls_file():
     r = requests.get(wids_url, stream=True)
     with open(image_net_urls_file, 'wb') as f:
         total_length = int(r.headers.get('content-length'))
-        print('Total content length :', total_length)
         for chunk in tqdm(r.iter_content(chunk_size=1024), total=(total_length / 1024) + 1, unit='KB'):
             f.write(chunk)
             f.flush()
@@ -77,7 +74,6 @@ def download_wid2types_file():
     r = requests.get(word_url, stream=True)
     with open(image_net_word_file, 'wb') as f:
         total_length = int(r.headers.get('content-length'))
-        print('Total content length :', total_length)
         for chunk in tqdm(r.iter_content(chunk_size=1024), total=(total_length / 1024) + 1, unit='KB'):
             f.write(chunk)
             f.flush()
@@ -88,6 +84,9 @@ if not os.path.exists(image_net_word_file) or os.path.getsize(image_net_word_fil
     download_wid2types_file()
     assert os.path.getsize(image_net_word_file) == 2655750
 
+print('Size of wid -> urls file : {:8.2f} Mb'.format(os.path.getsize(image_net_urls_file)/1024/1024))
+print('Size of wid -> word file : {:8.2f} Mb'.format(os.path.getsize(image_net_word_file)/1024/1024))
+
 
 ##########################################################################
 # 3. Extract urls from download zipped file
@@ -95,7 +94,7 @@ if not os.path.exists(image_net_word_file) or os.path.getsize(image_net_word_fil
 
 
 def get_url2name():
-    # Extract datasets
+    """ Extract imagenet_fall11_urls.tgz file and get image download urls. """
     print('Extracting urls from imagenet_fall11_urls.tgz...')
     url2name = {}
     with tarfile.open(image_net_urls_file) as tar:
@@ -111,7 +110,7 @@ def get_url2name():
 
 # Url -> file name mapping
 url2name = get_url2name()
-print('ImageNet contains {} images in total'.format(len(url2name)))
+print('Extract {} images download urls in total'.format(len(url2name)))
 
 
 ##########################################################################
@@ -119,10 +118,25 @@ print('ImageNet contains {} images in total'.format(len(url2name)))
 ##########################################################################
 
 
-def download_image(url, filename):
+async def download_image(sess, url, filename):
+    """ Download image and save it. """
     try:
         print('Downloading', filename, 'from', url, '...')
+        r = await sess.get(url)
         with open(os.path.join(image_net_image_dir, filename+'.jpg'), 'wb') as f:
-            f.write(requests.get(url).content)
-    except ConnectionError:
-        print('Download Failed', url)
+            f.write(r.content)
+    except requests.exceptions.RequestException:
+        print('Failed to download', url)
+
+
+async def download_all(loop):
+    async with aiohttp.ClientSession() as sess:
+        tasks = [loop.create_task(download_image(sess, url, filename)) for url, filename in url2name.items()]
+        finished, unfinished = await asyncio.wait(tasks)
+        for r in finished:
+            print(r.result())
+
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(download_all(loop))
+loop.close()
