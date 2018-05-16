@@ -4,8 +4,8 @@ import tarfile
 from pathlib import Path
 import requests
 from tqdm import tqdm
-import aiohttp
-import asyncio
+import multiprocessing as mp
+from PIL import Image
 
 ##########################################################################
 # Two Files are given by ImageNet Website to download
@@ -117,26 +117,34 @@ print('Extract {} images download urls in total'.format(len(url2name)))
 # 4. Download Images
 ##########################################################################
 
+def check_image_with_pil(path):
+    try:
+        Image.open(path)
+    except IOError:
+        return False
+    return True
 
-async def download_image(sess, url, filename):
+
+def download(url, filename):
     """ Download image and save it. """
     try:
-        print('Downloading', filename, 'from', url, '...')
-        r = await sess.get(url)
-        with open(os.path.join(image_net_image_dir, filename+'.jpg'), 'wb') as f:
-            f.write(r.content)
+        fmt = url.split('.')[-1].strip().lower()
+        if fmt in ['jpg', 'png']:
+            print('Downloading', filename, 'from', url, '...')
+            r = requests.get(url)
+            filepath = os.path.join(image_net_image_dir, filename+'.'+fmt)
+            with open(filepath, 'wb') as f:
+                f.write(r.content)
+            if not check_image_with_pil(filepath):
+                os.remove(filepath)
     except requests.exceptions.RequestException:
         print('Failed to download', url)
 
 
-async def download_all(loop):
-    async with aiohttp.ClientSession() as sess:
-        tasks = [loop.create_task(download_image(sess, url, filename)) for url, filename in url2name.items()]
-        finished, unfinished = await asyncio.wait(tasks)
-        for r in finished:
-            print(r.result())
+if len(os.listdir(image_net_image_dir)) < 7000:
+    pool = mp.Pool(4)
+    print('\n==> Parallel Downloading...\n')
+    jobs = [pool.apply_async(download, (url, filename, )) for url, filename in list(url2name.items())[:10000]]
+    for job in jobs:
+        job.get()
 
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(download_all(loop))
-loop.close()
