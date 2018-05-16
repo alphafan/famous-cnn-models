@@ -146,7 +146,7 @@ def download(url, filename):
             # Filter image file that can not open
             # Filter image file that is not valid
             # Not valid image is the file where image no longer exists
-            if not check_image_with_pil(filepath) or is_image_valid(filepath):
+            if not check_image_with_pil(filepath) or not is_image_valid(filepath):
                 os.remove(filepath)
     except requests.exceptions.RequestException:
         print('Failed to download', url)
@@ -158,5 +158,11 @@ if len(os.listdir(image_net_image_dir)) < 7000:
     jobs = [pool.apply_async(download, (url, filename,)) for url, filename in list(url2name.items())[:15000]]
     for job in jobs:
         job.get()
-    # This image is also not a valid image
-    os.remove(os.path.join(image_net_image_dir, 'n00005787_86.jpg'))
+
+
+print('There are {} images downloaded.',format(len(os.listdir(image_net_image_dir))))
+
+
+##########################################################################
+# 5. Reshape Images into Desired Size
+##########################################################################
