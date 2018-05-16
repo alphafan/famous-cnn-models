@@ -125,14 +125,11 @@ def check_image_with_pil(path):
     return True
 
 
-def is_image_colorful(path):
+def is_image_valid(path):
     im = Image.open(path).convert('RGB')
     w, h = im.size
-    for i in range(w):
-        for j in range(h):
-            r, g, b = im.getpixel((i, j))
-            if r != g != b:
-                return False
+    if im.getpixel((0, 0)) == im.getpixel((w-1, 0)) == im.getpixel((0, h-1)) == im.getpixel((w-1, h-1)):
+        return False
     return True
 
 
@@ -147,10 +144,9 @@ def download(url, filename):
             with open(filepath, 'wb') as f:
                 f.write(r.content)
             # Filter image file that can not open
-            # Filter image file that is no longer valid
-            # No longer valid image are all gray scale
-            # Valid image is colorful ...
-            if not check_image_with_pil(filepath) or not is_image_colorful(filepath):
+            # Filter image file that is not valid
+            # Not valid image is the file where image no longer exists
+            if not check_image_with_pil(filepath) or is_image_valid(filepath):
                 os.remove(filepath)
     except requests.exceptions.RequestException:
         print('Failed to download', url)
@@ -162,3 +158,5 @@ if len(os.listdir(image_net_image_dir)) < 7000:
     jobs = [pool.apply_async(download, (url, filename,)) for url, filename in list(url2name.items())[:15000]]
     for job in jobs:
         job.get()
+    # This image is also not a valid image
+    os.remove(os.path.join(image_net_image_dir, 'n00005787_86.jpg'))
