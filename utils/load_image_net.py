@@ -29,7 +29,6 @@ wids_url = 'http://image-net.org/imagenet_data/urls/imagenet_fall11_urls.tgz'
 # ImageNet WordNet ID --> object type mappings download path
 word_url = 'http://image-net.org/archive/words.txt'
 
-
 ##########################################################################
 # 1. Make directory to save download datasets
 ##########################################################################
@@ -84,8 +83,8 @@ if not os.path.exists(image_net_word_file) or os.path.getsize(image_net_word_fil
     download_wid2types_file()
     assert os.path.getsize(image_net_word_file) == 2655750
 
-print('Size of wid -> urls file : {:8.2f} Mb'.format(os.path.getsize(image_net_urls_file)/1024/1024))
-print('Size of wid -> word file : {:8.2f} Mb'.format(os.path.getsize(image_net_word_file)/1024/1024))
+print('Size of wid -> urls file : {:8.2f} Mb'.format(os.path.getsize(image_net_urls_file) / 1024 / 1024))
+print('Size of wid -> word file : {:8.2f} Mb'.format(os.path.getsize(image_net_word_file) / 1024 / 1024))
 
 
 ##########################################################################
@@ -117,11 +116,23 @@ print('Extract {} images download urls in total'.format(len(url2name)))
 # 4. Download Images
 ##########################################################################
 
+
 def check_image_with_pil(path):
     try:
         Image.open(path)
     except IOError:
         return False
+    return True
+
+
+def is_image_colorful(path):
+    im = Image.open(path).convert('RGB')
+    w, h = im.size
+    for i in range(w):
+        for j in range(h):
+            r, g, b = im.getpixel((i, j))
+            if r != g != b:
+                return False
     return True
 
 
@@ -132,19 +143,22 @@ def download(url, filename):
         if fmt in ['jpg', 'png']:
             print('Downloading', filename, 'from', url, '...')
             r = requests.get(url)
-            filepath = os.path.join(image_net_image_dir, filename+'.'+fmt)
+            filepath = os.path.join(image_net_image_dir, filename + '.' + fmt)
             with open(filepath, 'wb') as f:
                 f.write(r.content)
-            if not check_image_with_pil(filepath):
+            # Filter image file that can not open
+            # Filter image file that is no longer valid
+            # No longer valid image are all gray scale
+            # Valid image is colorful ...
+            if not check_image_with_pil(filepath) or not is_image_colorful(filepath):
                 os.remove(filepath)
     except requests.exceptions.RequestException:
         print('Failed to download', url)
 
 
 if len(os.listdir(image_net_image_dir)) < 7000:
-    pool = mp.Pool(4)
+    pool = mp.Pool(10)
     print('\n==> Parallel Downloading...\n')
-    jobs = [pool.apply_async(download, (url, filename, )) for url, filename in list(url2name.items())[:10000]]
+    jobs = [pool.apply_async(download, (url, filename,)) for url, filename in list(url2name.items())[:15000]]
     for job in jobs:
         job.get()
-
