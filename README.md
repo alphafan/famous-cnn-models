@@ -2,4 +2,4 @@
 
 - [LeNet5](lenet5)
 
-__Still under development__
+__Still under development...__
