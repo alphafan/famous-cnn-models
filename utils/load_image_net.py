@@ -1,12 +1,12 @@
 import os
 import tarfile
 
+import cv2
 import numpy as np
 from pathlib import Path
 import requests
 from tqdm import tqdm
 from PIL import Image
-from scipy import misc
 import concurrent.futures
 
 ##########################################################################
@@ -181,6 +181,9 @@ print('There are {} images downloaded.'.format(len(os.listdir(image_net_image_di
 # 5. Reshape Images into Desired Size
 ##########################################################################
 
-for filename in os.listdir(image_net_image_dir)[:1]:
-    img = misc.imread(os.path.join(image_net_image_dir, filename))
-    print(np.shape(img))
+def load_image(filename):
+    # Read image from file
+    img = cv2.imread(os.path.join(image_net_image_dir, filename))
+    # Resize it to desired format(227, 227, 3)
+    img = cv2.resize(img, dsize=(227, 227), interpolation=cv2.INTER_CUBIC)
+    return img

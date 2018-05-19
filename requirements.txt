@@ -4,3 +4,4 @@ requests
 numpy
 tqdm
 aiohttp
+opencv-python
