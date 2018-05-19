@@ -1,13 +1,16 @@
 import os
 import tarfile
+from collections import defaultdict
 
-import cv2
+import pickle
 import numpy as np
+import cv2
 from pathlib import Path
 import requests
 from tqdm import tqdm
 from PIL import Image
 import concurrent.futures
+from sklearn.preprocessing import MultiLabelBinarizer
 
 ##########################################################################
 # Two Files are given by ImageNet Website to download
@@ -41,6 +44,7 @@ image_net_dir = os.path.join(str(Path(__file__).absolute().parent.parent), 'imag
 image_net_urls_file = os.path.join(image_net_dir, 'imagenet_fall11_urls.tgz')
 image_net_word_file = os.path.join(image_net_dir, 'word.txt')
 image_net_image_dir = os.path.join(image_net_dir, 'images')
+image_net_wid_2_url = os.path.join(image_net_dir, 'wid_2_url.p')
 
 # Create these two repository if not exists
 if not os.path.exists(image_net_dir):
@@ -109,8 +113,14 @@ def get_url2wid():
     return url2wid
 
 
-# Url -> file name mapping
-url2wid = get_url2wid()
+if os.path.exists(image_net_wid_2_url):
+    print('Loading wid --> urls..')
+    url2wid = pickle.load(open(image_net_wid_2_url, 'rb'))
+else:
+    print('Mapping wid --> urls..')
+    url2wid = get_url2wid()
+    pickle.dump(url2wid, open(image_net_wid_2_url, 'wb'))
+
 print('Extract {} images download urls in total'.format(len(url2wid)))
 
 
@@ -120,6 +130,9 @@ print('Extract {} images download urls in total'.format(len(url2wid)))
 
 
 def can_open_image(path):
+    """
+    Check if an image file can be opened
+    """
     try:
         Image.open(path)
     except IOError:
@@ -134,13 +147,17 @@ def is_image_valid(path):
     """
     im = Image.open(path).convert('RGB')
     w, h = im.size
-    if im.getpixel((0, 0)) == im.getpixel((w-1, 0)) == im.getpixel((0, h-1)) == im.getpixel((w-1, h-1)):
+    if w == 0 or h == 0:
+        return False
+    if im.getpixel((0, 0)) == im.getpixel((w - 1, 0)) == im.getpixel((0, h - 1)) == im.getpixel((w - 1, h - 1)):
         return False
     return True
 
 
 def download(url, wid):
-    """ Download image and save it. """
+    """
+    Download single image and save to file.
+    """
     try:
         fmt = url.split('.')[-1].strip().lower()
         if fmt in ['jpg', 'png']:
@@ -159,6 +176,9 @@ def download(url, wid):
 
 
 def download_all():
+    """
+    Parallel download images.
+    """
     # We can use a with statement to ensure threads are cleaned up promptly
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         # Start the load operations and mark each future with its URL
@@ -178,12 +198,61 @@ print('There are {} images downloaded.'.format(len(os.listdir(image_net_image_di
 
 
 ##########################################################################
-# 5. Reshape Images into Desired Size
+# 5. Create a dictionary saving wid --> types mappings
 ##########################################################################
 
-def load_image(filename):
+
+def get_wid2types():
+    wid2types = defaultdict(set)
+    with open(image_net_word_file) as f:
+        lines = f.readlines()
+        for line in lines:
+            wid, types = line.split('\t')
+            wid, types = wid.strip(), list(set([t.strip() for t in types.split(',')]))
+            wid2types[wid] = types
+    return wid2types
+
+
+wid2types = get_wid2types()
+
+
+##########################################################################
+# 6. Build images and its labels numpy array
+#   - Covert image to desired format 227 * 227 * 3
+#   - Covert label to multi class array
+##########################################################################
+
+
+def resize_image(filename):
     # Read image from file
     img = cv2.imread(os.path.join(image_net_image_dir, filename))
     # Resize it to desired format(227, 227, 3)
     img = cv2.resize(img, dsize=(227, 227), interpolation=cv2.INTER_CUBIC)
     return img
+
+
+print('Converting images and labels to python list...')
+images, labels, count = [], [], 0
+
+for filename in os.listdir(image_net_image_dir):
+    if filename.endswith('.png') or filename.endswith('.jpg'):
+        try:
+            img = resize_image(filename)
+            wid = filename.split('.')[0]
+            wid = wid.split('_')[0]
+            types = wid2types[wid]
+            images.append(img)
+            labels.append(types)
+            count += 1
+            if count == 700:
+                break
+        except Exception as e:
+            print('Skips', str(e))
+
+labels = MultiLabelBinarizer().fit_transform(labels)
+
+images = np.asarray(images)
+labels = np.asarray(labels)
+
+print(images.shape)
+print(labels.shape)
