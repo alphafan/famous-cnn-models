@@ -1,11 +1,13 @@
 import os
 import tarfile
 
+import numpy as np
 from pathlib import Path
 import requests
 from tqdm import tqdm
-import multiprocessing as mp
 from PIL import Image
+from scipy import misc
+import concurrent.futures
 
 ##########################################################################
 # Two Files are given by ImageNet Website to download
@@ -117,7 +119,7 @@ print('Extract {} images download urls in total'.format(len(url2name)))
 ##########################################################################
 
 
-def check_image_with_pil(path):
+def can_open_image(path):
     try:
         Image.open(path)
     except IOError:
@@ -126,6 +128,10 @@ def check_image_with_pil(path):
 
 
 def is_image_valid(path):
+    """
+    Check if image is still valid
+    No longer valid image's four corner are the same pixels
+    """
     im = Image.open(path).convert('RGB')
     w, h = im.size
     if im.getpixel((0, 0)) == im.getpixel((w-1, 0)) == im.getpixel((0, h-1)) == im.getpixel((w-1, h-1)):
@@ -146,18 +152,24 @@ def download(url, filename):
             # Filter image file that can not open
             # Filter image file that is not valid
             # Not valid image is the file where image no longer exists
-            if not check_image_with_pil(filepath) or not is_image_valid(filepath):
+            if not can_open_image(filepath) or not is_image_valid(filepath):
                 os.remove(filepath)
     except requests.exceptions.RequestException:
         print('Failed to download', url)
+    return url
 
 
 if len(os.listdir(image_net_image_dir)) < 7000:
-    pool = mp.Pool(10)
-    print('\n==> Parallel Downloading...\n')
-    jobs = [pool.apply_async(download, (url, filename,)) for url, filename in list(url2name.items())[:15000]]
-    for job in jobs:
-        job.get()
+    # We can use a with statement to ensure threads are cleaned up promptly
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        # Start the load operations and mark each future with its URL
+        futures = {executor.submit(download, url, filename)
+                   for url, filename in list(url2name.items())[:15000]}
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                url = future.result()
+            except Exception as e:
+                print('Skip...', str(e))
 
 print('There are {} images downloaded.'.format(len(os.listdir(image_net_image_dir))))
 
@@ -166,5 +178,6 @@ print('There are {} images downloaded.'.format(len(os.listdir(image_net_image_di
 # 5. Reshape Images into Desired Size
 ##########################################################################
 
-for filename in os.listdir(image_net_image_dir):
-    pass
+for filename in os.listdir(image_net_image_dir)[:1]:
+    img = misc.imread(os.path.join(image_net_image_dir, filename))
+    print(np.shape(img))
