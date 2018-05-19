@@ -14,4 +14,14 @@ class AlexNet(object):
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
 
     def run(self):
+        """
+        # 1st Layer: Conv (w ReLu) -> Lrn -> Pool
+        # 2nd Layer: Conv (w ReLu) -> Lrn -> Pool with 2 groups
+        # 3rd Layer: Conv (w ReLu)
+        # 4th Layer: Conv (w ReLu) splitted into two groups
+        # 5th Layer: Conv (w ReLu) -> Pool splitted into two groups
+        # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
+        # 7th Layer: FC (w ReLu) -> Dropout
+        # 8th Layer: FC and return unscaled activations
+        """
         pass
