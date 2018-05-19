@@ -44,7 +44,11 @@ image_net_dir = os.path.join(str(Path(__file__).absolute().parent.parent), 'imag
 image_net_urls_file = os.path.join(image_net_dir, 'imagenet_fall11_urls.tgz')
 image_net_word_file = os.path.join(image_net_dir, 'word.txt')
 image_net_image_dir = os.path.join(image_net_dir, 'images')
+# Pickle files
 image_net_wid_2_url = os.path.join(image_net_dir, 'wid_2_url.p')
+image_net_wid_2_types = os.path.join(image_net_dir, 'wid_2_types.p')
+image_net_images = os.path.join(image_net_dir, 'images.p')
+image_net_labels = os.path.join(image_net_dir, 'labels.p')
 
 # Create these two repository if not exists
 if not os.path.exists(image_net_dir):
@@ -213,7 +217,13 @@ def get_wid2types():
     return wid2types
 
 
-wid2types = get_wid2types()
+if os.path.exists(image_net_wid_2_types):
+    print('Loading wid --> types..')
+    wid2types = pickle.load(open(image_net_wid_2_types, 'rb'))
+else:
+    print('Mapping wid --> urls..')
+    wid2types = get_wid2types()
+    pickle.dump(wid2types, open(image_net_wid_2_types, 'wb'))
 
 
 ##########################################################################
@@ -231,28 +241,43 @@ def resize_image(filename):
     return img
 
 
-print('Converting images and labels to python list...')
-images, labels, count = [], [], 0
+if os.path.exists(image_net_images) and os.path.exists(image_net_labels):
+    print('Loading images and labels array ..')
+    images = pickle.load(open(image_net_images, 'rb'))
+    labels = pickle.load(open(image_net_labels, 'rb'))
+else:
+    print('Load and comvert images and labels to numpy array...')
+    images, labels, count = [], [], 0
 
-for filename in os.listdir(image_net_image_dir):
-    if filename.endswith('.png') or filename.endswith('.jpg'):
-        try:
-            img = resize_image(filename)
-            wid = filename.split('.')[0]
-            wid = wid.split('_')[0]
-            types = wid2types[wid]
-            images.append(img)
-            labels.append(types)
-            count += 1
-            if count == 700:
-                break
-        except Exception as e:
-            print('Skips', str(e))
+    for filename in os.listdir(image_net_image_dir):
+        if filename.endswith('.png') or filename.endswith('.jpg'):
+            try:
+                img = resize_image(filename)
+                wid = filename.split('.')[0]
+                wid = wid.split('_')[0]
+                types = wid2types[wid]
+                images.append(img)
+                labels.append(types)
+                count += 1
+                if count == 7000:
+                    break
+            except Exception as e:
+                print('Skips', str(e))
 
-labels = MultiLabelBinarizer().fit_transform(labels)
+    labels = MultiLabelBinarizer().fit_transform(labels)
 
-images = np.asarray(images)
-labels = np.asarray(labels)
+    images = np.asarray(images)
+    labels = np.asarray(labels)
 
+    pickle.dump(images, open(image_net_images, 'wb'))
+    pickle.dump(labels, open(image_net_labels, 'wb'))
+
+print('Transformed input and output.')
 print('Input shape  :', images.shape)
 print('Output shape :', labels.shape)
+
+
+##########################################################################
+# 7. Split data into train / test / validation
+##########################################################################
+
