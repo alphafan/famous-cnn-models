@@ -254,5 +254,5 @@ labels = MultiLabelBinarizer().fit_transform(labels)
 images = np.asarray(images)
 labels = np.asarray(labels)
 
-print(images.shape)
-print(labels.shape)
+print('Input shape  :', images.shape)
+print('Output shape :', labels.shape)
