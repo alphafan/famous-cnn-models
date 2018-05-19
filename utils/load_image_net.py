@@ -94,24 +94,24 @@ print('Size of wid -> word file : {:8.2f} Mb'.format(os.path.getsize(image_net_w
 ##########################################################################
 
 
-def get_url2name():
+def get_url2wid():
     """ Extract imagenet_fall11_urls.tgz file and get image download urls. """
     print('Extracting urls from imagenet_fall11_urls.tgz...')
-    url2name = {}
+    url2wid = {}
     with tarfile.open(image_net_urls_file) as tar:
         f = tar.extractfile('fall11_urls.txt')
         while True:
             try:
-                filename, url = f.readline().decode().strip().split('\t')
-                url2name[url] = filename
+                wid, url = f.readline().decode().strip().split('\t')
+                url2wid[url] = wid
             except ValueError:
                 break
-    return url2name
+    return url2wid
 
 
 # Url -> file name mapping
-url2name = get_url2name()
-print('Extract {} images download urls in total'.format(len(url2name)))
+url2wid = get_url2wid()
+print('Extract {} images download urls in total'.format(len(url2wid)))
 
 
 ##########################################################################
@@ -139,14 +139,14 @@ def is_image_valid(path):
     return True
 
 
-def download(url, filename):
+def download(url, wid):
     """ Download image and save it. """
     try:
         fmt = url.split('.')[-1].strip().lower()
         if fmt in ['jpg', 'png']:
-            print('Downloading', filename, 'from', url, '...')
+            print('Downloading', wid, 'from', url, '...')
             r = requests.get(url)
-            filepath = os.path.join(image_net_image_dir, filename + '.' + fmt)
+            filepath = os.path.join(image_net_image_dir, wid + '.' + fmt)
             with open(filepath, 'wb') as f:
                 f.write(r.content)
             # Filter image file that can not open
@@ -162,8 +162,8 @@ def download_all():
     # We can use a with statement to ensure threads are cleaned up promptly
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         # Start the load operations and mark each future with its URL
-        futures = {executor.submit(download, url, filename)
-                   for url, filename in list(url2name.items())[:15000]}
+        futures = {executor.submit(download, url, wid)
+                   for url, wid in list(url2wid.items())[:15000]}
         for future in concurrent.futures.as_completed(futures):
             try:
                 future.result()
