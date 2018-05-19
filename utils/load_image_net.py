@@ -279,7 +279,7 @@ else:
     pickle.dump(images, open(image_net_images, 'wb'))
     pickle.dump(labels, open(image_net_labels, 'wb'))
 
-print('Transformed input and output.')
+print('Transformed images and labels.')
 print('Input shape  :', images.shape)
 print('Output shape :', labels.shape)
 
