@@ -156,10 +156,9 @@ def download(url, filename):
                 os.remove(filepath)
     except requests.exceptions.RequestException:
         print('Failed to download', url)
-    return url
 
 
-if len(os.listdir(image_net_image_dir)) < 7000:
+def download_all():
     # We can use a with statement to ensure threads are cleaned up promptly
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         # Start the load operations and mark each future with its URL
@@ -167,9 +166,13 @@ if len(os.listdir(image_net_image_dir)) < 7000:
                    for url, filename in list(url2name.items())[:15000]}
         for future in concurrent.futures.as_completed(futures):
             try:
-                url = future.result()
+                future.result()
             except Exception as e:
                 print('Skip...', str(e))
+
+
+if len(os.listdir(image_net_image_dir)) < 7000:
+    download_all()
 
 print('There are {} images downloaded.'.format(len(os.listdir(image_net_image_dir))))
 
