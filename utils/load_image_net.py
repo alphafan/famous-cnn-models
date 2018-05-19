@@ -11,6 +11,7 @@ from tqdm import tqdm
 from PIL import Image
 import concurrent.futures
 from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.model_selection import train_test_split
 
 ##########################################################################
 # Two Files are given by ImageNet Website to download
@@ -49,6 +50,12 @@ image_net_wid_2_url = os.path.join(image_net_dir, 'wid_2_url.p')
 image_net_wid_2_types = os.path.join(image_net_dir, 'wid_2_types.p')
 image_net_images = os.path.join(image_net_dir, 'images.p')
 image_net_labels = os.path.join(image_net_dir, 'labels.p')
+images_net_train_images = os.path.join(image_net_dir, 'train_images.p')
+images_net_train_labels = os.path.join(image_net_dir, 'train_labels.p')
+images_net_test_images = os.path.join(image_net_dir, 'test_images.p')
+images_net_test_labels = os.path.join(image_net_dir, 'test_labels.p')
+images_net_validation_images = os.path.join(image_net_dir, 'validation_images.p')
+images_net_validation_labels = os.path.join(image_net_dir, 'validation_labels.p')
 
 # Create these two repository if not exists
 if not os.path.exists(image_net_dir):
@@ -276,8 +283,40 @@ print('Transformed input and output.')
 print('Input shape  :', images.shape)
 print('Output shape :', labels.shape)
 
-
 ##########################################################################
 # 7. Split data into train / test / validation
 ##########################################################################
 
+if os.path.exists(images_net_train_images) and os.path.exists(images_net_train_labels):
+    print('Loading train/test/validation dataset.')
+
+    X_train = pickle.load(open(images_net_train_images, 'rb'))
+    y_train = pickle.load(open(images_net_train_labels, 'rb'))
+    X_test = pickle.load(open(images_net_test_images, 'rb'))
+    y_test = pickle.load(open(images_net_test_labels, 'rb'))
+    X_validation = pickle.load(open(images_net_validation_images, 'rb'))
+    y_validation = pickle.load(open(images_net_validation_labels, 'rb'))
+else:
+    print('Splitting dataset into train/test/validation.')
+    X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.1, random_state=1)
+    X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.2, random_state=1)
+
+    pickle.dump(X_train, open(images_net_train_images, 'wb'))
+    pickle.dump(y_train, open(images_net_train_labels, 'wb'))
+    pickle.dump(X_test, open(images_net_test_images, 'wb'))
+    pickle.dump(y_test, open(images_net_test_labels, 'wb'))
+    pickle.dump(X_validation, open(images_net_validation_images, 'wb'))
+    pickle.dump(y_validation, open(images_net_validation_labels, 'wb'))
+
+
+print('Train dataset shape')
+print('Input shape  :', X_train.shape)
+print('Output shape :', y_train.shape)
+
+print('Test dataset shape')
+print('Input shape  :', X_test.shape)
+print('Output shape :', y_test.shape)
+
+print('Validation dataset shape')
+print('Input shape  :', X_validation.shape)
+print('Output shape :', y_validation.shape)
