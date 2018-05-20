@@ -8,10 +8,34 @@ from utils.load_image_net import (
 
 class AlexNet(object):
 
-    def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
+    def __init__(self, learning_rate=0.1, num_epochs=10, batch_size=100):
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
+        # Weight parameters as devised in the original research paper
+        self.weights = {
+            "wc1": tf.Variable(tf.truncated_normal([11, 11, 3, 96], stddev=0.01), name="wc1"),
+            "wc2": tf.Variable(tf.truncated_normal([5, 5, 96, 256], stddev=0.01), name="wc2"),
+            "wc3": tf.Variable(tf.truncated_normal([3, 3, 256, 384], stddev=0.01), name="wc3"),
+            "wc4": tf.Variable(tf.truncated_normal([3, 3, 384, 384], stddev=0.01), name="wc4"),
+            "wc5": tf.Variable(tf.truncated_normal([3, 3, 384, 256], stddev=0.01), name="wc5"),
+            "wf1": tf.Variable(tf.truncated_normal([9216, 4096], stddev=0.01), name="wf1"),
+            "wf2": tf.Variable(tf.truncated_normal([4096, 4096], stddev=0.01), name="wf2"),
+            "wf3": tf.Variable(tf.truncated_normal([4096, 103], stddev=0.01), name="wf3")
+        }
+        # Bias parameters as devised in the original research paper
+        self.biases = {
+            "bc1": tf.Variable(tf.constant(0.0, shape=[96]), name="bc1"),
+            "bc2": tf.Variable(tf.constant(1.0, shape=[256]), name="bc2"),
+            "bc3": tf.Variable(tf.constant(0.0, shape=[384]), name="bc3"),
+            "bc4": tf.Variable(tf.constant(1.0, shape=[384]), name="bc4"),
+            "bc5": tf.Variable(tf.constant(1.0, shape=[256]), name="bc5"),
+            "bf1": tf.Variable(tf.constant(1.0, shape=[4096]), name="bf1"),
+            "bf2": tf.Variable(tf.constant(1.0, shape=[4096]), name="bf2"),
+            "bf3": tf.Variable(tf.constant(1.0, shape=[103]), name="bf3")
+        }
+        # fully connected layer
+        self.fc_layer = lambda x, W, b, name=None: tf.nn.bias_add(tf.matmul(x, W), b)
         # Training process related params
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
@@ -19,72 +43,95 @@ class AlexNet(object):
 
     def run(self):
         """
-        # 1st Layer: Conv (w ReLu) -> Pool -> Normalization
-        # 2nd Layer: Conv (w ReLu) -> Pool -> Normalization
-        # 3rd Layer: Conv (w ReLu)
-        # 4th Layer: Conv (w ReLu) splitted into two groups
-        # 5th Layer: Conv (w ReLu) -> Pool splitted into two groups
-        # 6th Layer: Flatten -> FC (w ReLu) -> Dropout
-        # 7th Layer: FC (w ReLu) -> Dropout
-        # 8th Layer: FC and return unscaled activations
+        # 1st convolutional layer:  Input 227 * 227 *  3,    Output 55 * 55 * 96
+        #   - a) Convolution        Input 227 * 227 *  3,    Output 55 * 55 * 96
+        #   - b) Subsampling        Input  55 *  55 * 96,    Output 55 * 55 * 96
+        #   - c) Normalization      Input  55 *  55 * 96,    Output 27 * 27 * 96
+
+        # 2nd convolutional layer:  Input 27 * 27 *  96 ,     Output 13 * 13 * 256
+        #   - a) Convolution        Input 27 * 27 *  96 ,     Output 27 * 27 * 256
+        #   - b) Subsampling        Input 27 * 27 * 256 ,     Output 13 * 13 * 256
+        #   - c) Normalization      Input 13 * 13 * 256 ,     Output 13 * 13 * 256
+
+        # 3rd convolutional layer:  Input 13 * 13 * 256 ,     Output 13 * 13 * 384
+
+        # 4th convolutional layer:  Input 13 * 13 * 384 ,     Output 13 * 13 * 384
+
+        # 5th convolutional layer:  Input 13 * 13 * 384 ,     Output 13 * 13 * 256
+        #   - a) Convolution        Input 13 * 13 * 384 ,     Output 13 * 13 * 256
+        #   - b) Subsampling        Input 13 * 13 * 256 ,     Output  6 *  6 * 256
+
+        # Flattern layer:           Input  6 *  6 * 256 ,     Output 9216
+
+        # 1st fully connected layer Input 9216          ,    Output 4906
+        #   - a) Full Connected     Input 9216          ,    Output 4906
+        #   - b) Dropout            Input 4906          ,    Output 4906
+
+        # 2nd fully connected layer Input 4906          .    Output 4906
+        #   - a) Full Connected     Input 4906          ,    Output 4906
+        #   - b) Dropout            Input 4906          ,    Output 4906
+
+        # 3rd fully connected layer Input 4906          ,    Output 103
         """
 
         ##########################################################################
         # Forward propagation
         ##########################################################################
 
-        # 1st convolutional layer:  Input 227 * 227 *  3    Output 55 * 55 * 96
-        #   - a) Convolution        Input 227 * 227 *  3    Output 55 * 55 * 96
-        #   - b) Subsampling        Input  55 *  55 * 96    Output 55 * 55 * 96
-        #   - c) Normalization      Input  55 *  55 * 96    Output 27 * 27 * 96
-        conv_1 = tf.layers.conv2d(self.X, filters=96, kernel_size=11, strides=4, activation=tf.nn.relu)
-        pool_1 = tf.layers.max_pooling2d(conv_1, pool_size=3, strides=2)
-        norm_1 = tf.nn.local_response_normalization(pool_1, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
+        # img = tf.reshape(self.X, [-1, 227, 227, 3])
 
-        # 2nd convolutional layer:  Input 27 * 27 *  96     Output 13 * 13 * 256
-        #   - a) Convolution        Input 27 * 27 *  96     Output 27 * 27 * 256
-        #   - b) Subsampling        Input 27 * 27 * 256     Output 13 * 13 * 256
-        #   - c) Normalization      Input 13 * 13 * 256     Output 13 * 13 * 256
-        conv_2 = tf.layers.conv2d(norm_1, filters=256, kernel_size=5, strides=1, activation=tf.nn.relu, padding='SAME')
-        pool_2 = tf.layers.max_pooling2d(conv_2, pool_size=3, strides=2)
-        norm_2 = tf.nn.local_response_normalization(pool_2, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
+        # 1st convolutional layer
+        conv1 = tf.nn.conv2d(self.X, self.weights["wc1"], strides=[1, 4, 4, 1], padding="SAME", name="conv1")
+        conv1 = tf.nn.bias_add(conv1, self.biases["bc1"])
+        conv1 = tf.nn.relu(conv1)
+        conv1 = tf.nn.local_response_normalization(conv1, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
+        conv1 = tf.nn.max_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="VALID")
 
-        # 3rd convolutional layer:  Input 13 * 13 * 256     Output 13 * 13 * 384
-        conv_3 = tf.layers.conv2d(norm_2, filters=384, kernel_size=3, strides=1, activation=tf.nn.relu, padding='SAME')
+        # 2nd convolutional layer
+        conv2 = tf.nn.conv2d(conv1, self.weights["wc2"], strides=[1, 1, 1, 1], padding="SAME", name="conv2")
+        conv2 = tf.nn.bias_add(conv2, self.biases["bc2"])
+        conv2 = tf.nn.relu(conv2)
+        conv2 = tf.nn.local_response_normalization(conv2, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
+        conv2 = tf.nn.max_pool(conv2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="VALID")
 
-        # 4th convolutional layer:  Input 13 * 13 * 384     Output 13 * 13 * 384
-        conv_4 = tf.layers.conv2d(conv_3, filters=384, kernel_size=3, strides=1, activation=tf.nn.relu, padding='SAME')
+        # 3rd convolutional layer
+        conv3 = tf.nn.conv2d(conv2, self.weights["wc3"], strides=[1, 1, 1, 1], padding="SAME", name="conv3")
+        conv3 = tf.nn.bias_add(conv3, self.biases["bc3"])
+        conv3 = tf.nn.relu(conv3)
 
-        # 5th convolutional layer:  Input 13 * 13 * 384     Output 13 * 13 * 256
-        #   - a) Convolution        Input 13 * 13 * 384     Output 13 * 13 * 256
-        #   - b) Subsampling        Input 13 * 13 * 256     Output  6 *  6 * 256
-        conv_5 = tf.layers.conv2d(conv_4, filters=256, kernel_size=3, strides=1, activation=tf.nn.relu, padding='SAME')
-        pool_5 = tf.layers.max_pooling2d(conv_5, pool_size=3, strides=2)
+        # 4th convolutional layer
+        conv4 = tf.nn.conv2d(conv3, self.weights["wc4"], strides=[1, 1, 1, 1], padding="SAME", name="conv4")
+        conv4 = tf.nn.bias_add(conv4, self.biases["bc4"])
+        conv4 = tf.nn.relu(conv4)
+
+        # 5th convolutional layer
+        conv5 = tf.nn.conv2d(conv4, self.weights["wc5"], strides=[1, 1, 1, 1], padding="SAME", name="conv5")
+        conv5 = tf.nn.bias_add(conv5, self.biases["bc5"])
+        conv5 = tf.nn.relu(conv5)
+        conv5 = tf.nn.max_pool(conv5, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="VALID")
 
         # stretching out the 5th convolutional layer into a long n-dimensional tensor
-        #                           Input  6 *  6 * 256     Output 9216
-        flatten = tf.layers.flatten(pool_5)
+        flatten = tf.layers.flatten(conv5)
 
-        # 1st fully connected layer Input 9216              Output 4906
-        #   - a) Full Connected     Input 9216              Output 4906
-        #   - b) Dropout            Input 4906              Output 4906
-        full_1 = tf.layers.dense(flatten, units=4906, activation=tf.nn.tanh)
-        drop_1 = tf.nn.dropout(full_1, keep_prob=0.5)
+        # 1st fully connected layer
+        fc1 = self.fc_layer(flatten, self.weights["wf1"], self.biases["bf1"], name="fc1")
+        fc1 = tf.nn.tanh(fc1)
+        fc1 = tf.nn.dropout(fc1, keep_prob=0.5)
 
-        # 2nd fully connected layer Input 4906              Output 4906
-        #   - a) Full Connected     Input 4906              Output 4906
-        #   - b) Dropout            Input 4906              Output 4906
-        full_2 = tf.layers.dense(drop_1, units=4906, activation=tf.nn.tanh)
-        drop_2 = tf.nn.dropout(full_2, keep_prob=0.5)
+        # 2nd fully connected layer
+        fc2 = self.fc_layer(fc1, self.weights["wf2"], self.biases["bf2"], name="fc2")
+        fc2 = tf.nn.tanh(fc2)
+        fc2 = tf.nn.dropout(fc2, keep_prob=0.5)
 
-        # 3rd fully connected layer Input 4906              Output 103
-        full_3 = tf.layers.dense(drop_2, units=103, activation=tf.nn.softmax)
+        # 3rd fully connected layer
+        fc3 = self.fc_layer(fc2, self.weights["wf3"], self.biases["bf3"], name="fc3")
+        fc3 = tf.nn.softmax(fc3)
 
         ##########################################################################
         # Backward propagation
         ##########################################################################
 
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=full_3)
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=fc3)
         loss = tf.reduce_mean(cross_entropy)
         optimizer = tf.train.AdamOptimizer(self.learning_rate)
         train = optimizer.minimize(loss)
@@ -93,7 +140,7 @@ class AlexNet(object):
         # Compute accuracy
         ##########################################################################
 
-        corrects = tf.equal(tf.round(full_3), tf.round(self.y))
+        corrects = tf.equal(tf.round(fc3), tf.round(self.y))
         accuracy = tf.reduce_mean(tf.cast(corrects, tf.float32))
 
         ##########################################################################
@@ -113,7 +160,7 @@ class AlexNet(object):
                 batch_X, batch_y = X_train[start:end], y_train[start:end]
                 sess.run(train, feed_dict={
                     self.X: batch_X, self.y: batch_y})
-                if end % 50 == 0:
+                if end % 100 == 0:
                     print('{} Training Epoch {} {}/{}'.format(datetime.now(), i, end, len(X_train)))
 
             # Show loss on validation dataset when finishing each epoch
@@ -133,8 +180,7 @@ class AlexNet(object):
         print('\n{} Test Result: Loss: {} Accuracy: {}\n'.format(
             datetime.now(), *sess.run(
                 (loss, accuracy),
-                feed_dict={self.X: X_test, self.y: y_test})
-            )
+                feed_dict={self.X: X_test, self.y: y_test}))
         )
 
         sess.close()

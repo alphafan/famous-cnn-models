@@ -298,8 +298,8 @@ if os.path.exists(images_net_train_images) and os.path.exists(images_net_train_l
     y_validation = pickle.load(open(images_net_validation_labels, 'rb'))
 else:
     print('Splitting dataset into train/test/validation.')
-    X_train, X_test, X_validation = images[:5500], images[5500:6000], images[6000:7000]
-    y_train, y_test, y_validation = labels[:5500], labels[5500:6000], labels[6000:7000]
+    X_train, X_test, X_validation = images[:5500], images[5500:6500], images[6500:7000]
+    y_train, y_test, y_validation = labels[:5500], labels[5500:6500], labels[6500:7000]
 
     pickle.dump(X_train, open(images_net_train_images, 'wb'))
     pickle.dump(y_train, open(images_net_train_labels, 'wb'))
