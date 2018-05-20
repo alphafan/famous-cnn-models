@@ -34,8 +34,8 @@ class AlexNet(object):
         #   - b) Subsampling        Input  55 *  55 * 96    Output 55 * 55 * 96
         #   - c) Normalization      Input  55 *  55 * 96    Output 27 * 27 * 96
         conv_1 = tf.layers.conv2d(self.X, filters=96, kernel_size=11, strides=4, activation=tf.nn.relu)
-        ppol_1 = tf.layers.max_pooling2d(conv_1, pool_size=3, strides=2)
-        norm_1 = tf.nn.local_response_normalization(ppol_1, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
+        pool_1 = tf.layers.max_pooling2d(conv_1, pool_size=3, strides=2)
+        norm_1 = tf.nn.local_response_normalization(pool_1, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
 
         # 2nd convolutional layer:  Input 27 * 27 *  96     Output 13 * 13 * 256
         #   - a) Convolution        Input 27 * 27 *  96     Output 27 * 27 * 256
