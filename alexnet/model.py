@@ -12,30 +12,11 @@ class AlexNet(object):
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
-        
-        # Weight parameters as devised in the original research paper
-        self.weights = {
-            "wc1": tf.Variable(tf.truncated_normal([11, 11, 3, 96], stddev=0.01), name="wc1"),
-            "wc2": tf.Variable(tf.truncated_normal([5, 5, 96, 256], stddev=0.01), name="wc2"),
-            "wc3": tf.Variable(tf.truncated_normal([3, 3, 256, 384], stddev=0.01), name="wc3"),
-            "wc4": tf.Variable(tf.truncated_normal([3, 3, 384, 384], stddev=0.01), name="wc4"),
-            "wc5": tf.Variable(tf.truncated_normal([3, 3, 384, 256], stddev=0.01), name="wc5")
-        }
-        # Bias parameters as devised in the original research paper
-        self.biases = {
-            "bc1": tf.Variable(tf.constant(0.0, shape=[96]), name="bc1"),
-            "bc2": tf.Variable(tf.constant(1.0, shape=[256]), name="bc2"),
-            "bc3": tf.Variable(tf.constant(0.0, shape=[384]), name="bc3"),
-            "bc4": tf.Variable(tf.constant(1.0, shape=[384]), name="bc4"),
-            "bc5": tf.Variable(tf.constant(1.0, shape=[256]), name="bc5")
-        }
-        # fully connected layer
-        self.fc_layer = lambda x, W, b, name=None: tf.nn.bias_add(tf.matmul(x, W), b)
 
     def run(self):
         """
         # 1st Layer: Conv (w ReLu) -> Pool -> Normalization
-        # 2nd Layer: Conv (w ReLu) -> Lrn -> Pool with 2 groups
+        # 2nd Layer: Conv (w ReLu) -> Pool -> Normalization
         # 3rd Layer: Conv (w ReLu)
         # 4th Layer: Conv (w ReLu) splitted into two groups
         # 5th Layer: Conv (w ReLu) -> Pool splitted into two groups
@@ -48,55 +29,52 @@ class AlexNet(object):
         # Forward propagation
         ##########################################################################
 
-        # 1st convolutional layer: Input 227 * 227 * 3  Output 28 * 28 * 96
-        #   - a) Convolution
-        #   - b) Normalization
-        #   - c) Subsampling
-        conv_1 = tf.nn.conv2d(self.X, self.weights["wc1"], strides=[1, 4, 4, 1], padding="SAME", name="conv1")
-        conv_1 = tf.nn.bias_add(conv_1, self.biases["bc1"])
-        conv_1 = tf.nn.relu(conv_1)
-        conv_1 = tf.nn.local_response_normalization(conv_1, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
-        conv_1 = tf.nn.max_pool(conv_1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="VALID")
+        # 1st convolutional layer:  Input 227 * 227 *  3    Output 55 * 55 * 96
+        #   - a) Convolution        Input 227 * 227 *  3    Output 55 * 55 * 96
+        #   - b) Subsampling        Input  55 *  55 * 96    Output 55 * 55 * 96
+        #   - c) Normalization      Input  55 *  55 * 96    Output 27 * 27 * 96
+        conv_1 = tf.layers.conv2d(self.X, filters=96, kernel_size=11, strides=4, activation=tf.nn.relu)
+        ppol_1 = tf.layers.max_pooling2d(conv_1, pool_size=3, strides=2)
+        norm_1 = tf.nn.local_response_normalization(ppol_1, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
 
-        # 2nd convolutional layer: Input 28 * 28 * 96  Output 13 * 13 * 256
-        #   - a) Convolution
-        #   - b) Normalization
-        #   - c) Subsampling
-        conv_2 = tf.nn.conv2d(conv_1, self.weights["wc2"], strides=[1, 1, 1, 1], padding="SAME", name="conv2")
-        conv_2 = tf.nn.bias_add(conv_2, self.biases["bc2"])
-        conv_2 = tf.nn.relu(conv_2)
-        conv_2 = tf.nn.local_response_normalization(conv_2, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
-        conv_2 = tf.nn.max_pool(conv_2, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="VALID")
+        # 2nd convolutional layer:  Input 27 * 27 *  96     Output 13 * 13 * 256
+        #   - a) Convolution        Input 27 * 27 *  96     Output 27 * 27 * 256
+        #   - b) Subsampling        Input 27 * 27 * 256     Output 13 * 13 * 256
+        #   - c) Normalization      Input 13 * 13 * 256     Output 13 * 13 * 256
+        conv_2 = tf.layers.conv2d(norm_1, filters=256, kernel_size=5, strides=1, activation=tf.nn.relu, padding='SAME')
+        pool_2 = tf.layers.max_pooling2d(conv_2, pool_size=3, strides=2)
+        norm_2 = tf.nn.local_response_normalization(pool_2, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
 
-        # 3rd convolutional layer
-        conv_3 = tf.nn.conv2d(conv_2, self.weights["wc3"], strides=[1, 1, 1, 1], padding="SAME", name="conv3")
-        conv_3 = tf.nn.bias_add(conv_3, self.biases["bc3"])
-        conv_3 = tf.nn.relu(conv_3)
+        # 3rd convolutional layer:  Input 13 * 13 * 256     Output 13 * 13 * 384
+        conv_3 = tf.layers.conv2d(norm_2, filters=384, kernel_size=3, strides=1, activation=tf.nn.relu, padding='SAME')
 
-        # 4th convolutional layer
-        conv_4 = tf.nn.conv2d(conv_3, self.weights["wc4"], strides=[1, 1, 1, 1], padding="SAME", name="conv4")
-        conv_4 = tf.nn.bias_add(conv_4, self.biases["bc4"])
-        conv_4 = tf.nn.relu(conv_4)
+        # 4th convolutional layer:  Input 13 * 13 * 384     Output 13 * 13 * 384
+        conv_4 = tf.layers.conv2d(conv_3, filters=384, kernel_size=3, strides=1, activation=tf.nn.relu, padding='SAME')
 
-        # 5th convolutional layer
-        conv_5 = tf.nn.conv2d(conv_4, self.weights["wc5"], strides=[1, 1, 1, 1], padding="SAME", name="conv5")
-        conv_5 = tf.nn.bias_add(conv_5, self.biases["bc5"])
-        conv_5 = tf.nn.relu(conv_5)
-        conv_5 = tf.nn.max_pool(conv_5, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding="VALID")
+        # 5th convolutional layer:  Input 13 * 13 * 384     Output 13 * 13 * 256
+        #   - a) Convolution        Input 13 * 13 * 384     Output 13 * 13 * 256
+        #   - b) Subsampling        Input 13 * 13 * 256     Output  6 *  6 * 256
+        conv_5 = tf.layers.conv2d(conv_4, filters=256, kernel_size=3, strides=1, activation=tf.nn.relu, padding='SAME')
+        pool_5 = tf.layers.max_pooling2d(conv_5, pool_size=3, strides=2)
 
         # stretching out the 5th convolutional layer into a long n-dimensional tensor
-        flatten = tf.layers.flatten(conv_5)
+        #                           Input  6 *  6 * 256     Output 9216
+        flatten = tf.layers.flatten(pool_5)
 
-        # 1st fully connected layer
+        # 1st fully connected layer Input 9216              Output 4906
+        #   - a) Full Connected     Input 9216              Output 4906
+        #   - b) Dropout            Input 4906              Output 4906
         full_1 = tf.layers.dense(flatten, units=4906, activation=tf.nn.tanh)
-        full_1 = tf.nn.dropout(full_1, keep_prob=0.5)
+        drop_1 = tf.nn.dropout(full_1, keep_prob=0.5)
 
-        # 2nd fully connected layer
-        full_2 = tf.layers.dense(full_1, units=4906, activation=tf.nn.tanh)
-        full_2 = tf.nn.dropout(full_2, keep_prob=0.5)
+        # 2nd fully connected layer Input 4906              Output 4906
+        #   - a) Full Connected     Input 4906              Output 4906
+        #   - b) Dropout            Input 4906              Output 4906
+        full_2 = tf.layers.dense(drop_1, units=4906, activation=tf.nn.tanh)
+        drop_2 = tf.nn.dropout(full_2, keep_prob=0.5)
 
-        # 3rd fully connected layer
-        full_3 = tf.layers.dense(full_2, units=103, activation=tf.nn.softmax)
+        # 3rd fully connected layer Input 4906              Output 103
+        full_3 = tf.layers.dense(drop_2, units=103, activation=tf.nn.softmax)
 
         ##########################################################################
         # Backward propagation
@@ -105,6 +83,7 @@ class AlexNet(object):
         # Return the complete AlexNet model
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
+            # print(sess.run(tf.shape(conv1), feed_dict={self.X: X_train[:1]}))
             print(sess.run(tf.shape(conv_1), feed_dict={self.X: X_train[:1]}))
             print(sess.run(tf.shape(conv_2), feed_dict={self.X: X_train[:1]}))
             print(sess.run(tf.shape(conv_3), feed_dict={self.X: X_train[:1]}))
