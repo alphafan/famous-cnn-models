@@ -8,7 +8,7 @@ from utils.load_image_net import (
 
 class AlexNet(object):
 
-    def __init__(self, learning_rate=0.1, num_epochs=10, batch_size=100):
+    def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
@@ -47,6 +47,9 @@ class AlexNet(object):
 
     def run(self):
         """
+        Run forward/backward propagation on AlexNet
+        Get 96.7% accuracy.
+
         # 1st convolutional layer:  Input 227 * 227 *  3,    Output 55 * 55 * 96
         #   - a) Convolution        Input 227 * 227 *  3,    Output 55 * 55 * 96
         #   - b) Normalization      Input  55 *  55 * 96,    Output 55 * 55 * 96
