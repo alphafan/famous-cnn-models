@@ -12,6 +12,7 @@ class AlexNet(object):
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
+
         # Weight parameters as devised in the original research paper
         self.weights = {
             "wc1": tf.Variable(tf.truncated_normal([11, 11, 3, 96], stddev=0.01), name="wc1"),
@@ -23,6 +24,7 @@ class AlexNet(object):
             "wf2": tf.Variable(tf.truncated_normal([4096, 4096], stddev=0.01), name="wf2"),
             "wf3": tf.Variable(tf.truncated_normal([4096, 103], stddev=0.01), name="wf3")
         }
+
         # Bias parameters as devised in the original research paper
         self.biases = {
             "bc1": tf.Variable(tf.constant(0.0, shape=[96]), name="bc1"),
@@ -34,8 +36,10 @@ class AlexNet(object):
             "bf2": tf.Variable(tf.constant(1.0, shape=[4096]), name="bf2"),
             "bf3": tf.Variable(tf.constant(1.0, shape=[103]), name="bf3")
         }
+
         # fully connected layer
         self.fc_layer = lambda x, W, b, name=None: tf.nn.bias_add(tf.matmul(x, W), b)
+
         # Training process related params
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
@@ -45,8 +49,8 @@ class AlexNet(object):
         """
         # 1st convolutional layer:  Input 227 * 227 *  3,    Output 55 * 55 * 96
         #   - a) Convolution        Input 227 * 227 *  3,    Output 55 * 55 * 96
-        #   - b) Subsampling        Input  55 *  55 * 96,    Output 55 * 55 * 96
-        #   - c) Normalization      Input  55 *  55 * 96,    Output 27 * 27 * 96
+        #   - b) Normalization      Input  55 *  55 * 96,    Output 55 * 55 * 96
+        #   - c) Subsampling        Input  55 *  55 * 96,    Output 27 * 27 * 96
 
         # 2nd convolutional layer:  Input 27 * 27 *  96 ,     Output 13 * 13 * 256
         #   - a) Convolution        Input 27 * 27 *  96 ,     Output 27 * 27 * 256
