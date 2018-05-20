@@ -105,7 +105,7 @@ class AlexNet(object):
         sess.run(tf.global_variables_initializer())
 
         print()
-        print(datetime.now(), 'Training LeNet5 model')
+        print(datetime.now(), 'Training AlexNet model')
 
         for i in range(self.num_epochs):
             for start in range(0, len(X_train), self.batch_size):
