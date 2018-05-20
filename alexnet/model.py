@@ -50,35 +50,35 @@ class AlexNet(object):
         Run forward/backward propagation on AlexNet
         Get 96.7% accuracy.
 
-        # 1st convolutional layer:  Input 227 * 227 *  3,    Output 55 * 55 * 96
-        #   - a) Convolution        Input 227 * 227 *  3,    Output 55 * 55 * 96
-        #   - b) Normalization      Input  55 *  55 * 96,    Output 55 * 55 * 96
-        #   - c) Subsampling        Input  55 *  55 * 96,    Output 27 * 27 * 96
+        # 1st convolutional layer:  Input 227 * 227 *  3 ,    Output 55 * 55 * 96
+        #   - a) Convolution        Input 227 * 227 *  3 ,    Output 55 * 55 * 96
+        #   - b) Normalization      Input  55 *  55 * 96 ,    Output 55 * 55 * 96
+        #   - c) Subsampling        Input  55 *  55 * 96 ,    Output 27 * 27 * 96
 
-        # 2nd convolutional layer:  Input 27 * 27 *  96 ,     Output 13 * 13 * 256
-        #   - a) Convolution        Input 27 * 27 *  96 ,     Output 27 * 27 * 256
-        #   - b) Subsampling        Input 27 * 27 * 256 ,     Output 13 * 13 * 256
-        #   - c) Normalization      Input 13 * 13 * 256 ,     Output 13 * 13 * 256
+        # 2nd convolutional layer:  Input 27 * 27 *  96  ,    Output 13 * 13 * 256
+        #   - a) Convolution        Input 27 * 27 *  96  ,    Output 27 * 27 * 256
+        #   - b) Subsampling        Input 27 * 27 * 256  ,    Output 13 * 13 * 256
+        #   - c) Normalization      Input 13 * 13 * 256  ,    Output 13 * 13 * 256
 
-        # 3rd convolutional layer:  Input 13 * 13 * 256 ,     Output 13 * 13 * 384
+        # 3rd convolutional layer:  Input 13 * 13 * 256  ,    Output 13 * 13 * 384
 
-        # 4th convolutional layer:  Input 13 * 13 * 384 ,     Output 13 * 13 * 384
+        # 4th convolutional layer:  Input 13 * 13 * 384  ,    Output 13 * 13 * 384
 
-        # 5th convolutional layer:  Input 13 * 13 * 384 ,     Output 13 * 13 * 256
-        #   - a) Convolution        Input 13 * 13 * 384 ,     Output 13 * 13 * 256
-        #   - b) Subsampling        Input 13 * 13 * 256 ,     Output  6 *  6 * 256
+        # 5th convolutional layer:  Input 13 * 13 * 384  ,    Output 13 * 13 * 256
+        #   - a) Convolution        Input 13 * 13 * 384  ,    Output 13 * 13 * 256
+        #   - b) Subsampling        Input 13 * 13 * 256  ,    Output  6 *  6 * 256
 
-        # Flattern layer:           Input  6 *  6 * 256 ,     Output 9216
+        # Flattern layer:           Input  6 *  6 * 256  ,    Output 9216
 
-        # 1st fully connected layer Input 9216          ,    Output 4906
-        #   - a) Full Connected     Input 9216          ,    Output 4906
-        #   - b) Dropout            Input 4906          ,    Output 4906
+        # 1st fully connected layer Input 9216           ,    Output 4906
+        #   - a) Full Connected     Input 9216           ,    Output 4906
+        #   - b) Dropout            Input 4906           ,    Output 4906
 
-        # 2nd fully connected layer Input 4906          .    Output 4906
-        #   - a) Full Connected     Input 4906          ,    Output 4906
-        #   - b) Dropout            Input 4906          ,    Output 4906
+        # 2nd fully connected layer Input 4906           ,    Output 4906
+        #   - a) Full Connected     Input 4906           ,    Output 4906
+        #   - b) Dropout            Input 4906           ,    Output 4906
 
-        # 3rd fully connected layer Input 4906          ,    Output 103
+        # 3rd fully connected layer Input 4906           ,    Output 103
         """
 
         ##########################################################################
