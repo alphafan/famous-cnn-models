@@ -273,7 +273,7 @@ else:
 
     labels = MultiLabelBinarizer().fit_transform(labels)
 
-    images = np.asarray(images)
+    images = np.asarray(images)/256
     labels = np.asarray(labels)
 
     pickle.dump(images, open(image_net_images, 'wb'))
@@ -298,8 +298,8 @@ if os.path.exists(images_net_train_images) and os.path.exists(images_net_train_l
     y_validation = pickle.load(open(images_net_validation_labels, 'rb'))
 else:
     print('Splitting dataset into train/test/validation.')
-    X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.1, random_state=1)
-    X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=0.2, random_state=1)
+    X_train, X_test, X_validation = images[:5500], images[5500:6000], images[6000:7000]
+    y_train, y_test, y_validation = labels[:5500], labels[5500:6000], labels[6000:7000]
 
     pickle.dump(X_train, open(images_net_train_images, 'wb'))
     pickle.dump(y_train, open(images_net_train_labels, 'wb'))
