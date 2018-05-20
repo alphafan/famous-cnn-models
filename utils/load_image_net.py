@@ -273,7 +273,7 @@ else:
 
     labels = MultiLabelBinarizer().fit_transform(labels)
 
-    images = np.asarray(images)/256
+    images = np.asarray(images)
     labels = np.asarray(labels)
 
     pickle.dump(images, open(image_net_images, 'wb'))

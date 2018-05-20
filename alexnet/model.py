@@ -48,7 +48,6 @@ class AlexNet(object):
     def run(self):
         """
         Run forward/backward propagation on AlexNet
-        Get 96.7% accuracy.
 
         # 1st convolutional layer:  Input 227 * 227 *  3 ,    Output 55 * 55 * 96
         #   - a) Convolution        Input 227 * 227 *  3 ,    Output 55 * 55 * 96
@@ -132,7 +131,6 @@ class AlexNet(object):
 
         # 3rd fully connected layer
         fc3 = self.fc_layer(fc2, self.weights["wf3"], self.biases["bf3"], name="fc3")
-        fc3 = tf.nn.softmax(fc3)
 
         ##########################################################################
         # Backward propagation
