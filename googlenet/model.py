@@ -15,7 +15,7 @@ class GoogLeNet(object):
 
         An inception layer consists of 4 individual parts and a Concatenation of them
 
-                                Concatenation
+                               Concatenation
                             /     /     \     \
                           /      /       \       \
                         /       /         \         \
