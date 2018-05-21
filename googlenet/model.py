@@ -11,19 +11,7 @@ class GoogLeNet(object):
     @staticmethod
     def inception(inputs, conv_11_size, conv_33_reduce_size, conv_33_size,
                   conv_55_reduce_size, conv_55_size, pool_conv_size):
-        """
-
-        Args:
-            inputs: (Tensor) -- Input tensor
-            conv_11_size: (int) -- Output dimension of part 1 ( conv 1 * 1 )
-            conv_33_reduce_size: (int) -- Output dimension of patt 2a ( conv 1 * 1 )
-            conv_33_size: (int) -- Output dimension of patt 2b ( conv 3 * 3 )
-            conv_55_reduce_size: (int) -- Output dimension of patt 3a ( conv 1 * 1 )
-            conv_55_size: (int) -- Output dimension of patt 3b ( conv 5 * 5 )
-            pool_conv_size: (int) -- Output dimension of patt 4b ( conv 1 * 1 )
-
-        Returns:
-            concat: (Tensor) -- Output tensor of inception layer
+        """ Apply inception processing to input tensor.
 
         An inception layer consists of 4 individual parts and a Concatenation of them
 
@@ -52,6 +40,18 @@ class GoogLeNet(object):
         - Part 4:
             a) 3 * 3 Max Pooling
             b) 1 * 1 Convolutional
+
+        Args:
+            inputs: (Tensor) -- Input tensor
+            conv_11_size: (int) -- Output dimension of part 1 ( conv 1 * 1 )
+            conv_33_reduce_size: (int) -- Output dimension of patt 2a ( conv 1 * 1 )
+            conv_33_size: (int) -- Output dimension of patt 2b ( conv 3 * 3 )
+            conv_55_reduce_size: (int) -- Output dimension of patt 3a ( conv 1 * 1 )
+            conv_55_size: (int) -- Output dimension of patt 3b ( conv 5 * 5 )
+            pool_conv_size: (int) -- Output dimension of patt 4b ( conv 1 * 1 )
+
+        Returns:
+            concat: (Tensor) -- Output tensor of inception layer
         """
         # Part 1
         conv_11 = tf.layers.conv2d(inputs, conv_11_size, [1, 1])
