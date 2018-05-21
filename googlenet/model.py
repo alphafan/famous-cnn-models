@@ -10,9 +10,22 @@ class GoogLeNet(object):
 
     @staticmethod
     def inception(inputs, conv_11_size, conv_33_reduce_size, conv_33_size,
-                  conv_55_reduce_size, conv_55_size, pool_size):
+                  conv_55_reduce_size, conv_55_size, pool_conv_size):
         """
-        An inception cell consists of 4 individual parts and a concat of them
+
+        Args:
+            inputs: (Tensor) -- Input tensor
+            conv_11_size: (int) -- Output dimension of part 1 ( conv 1 * 1 )
+            conv_33_reduce_size: (int) -- Output dimension of patt 2a ( conv 1 * 1 )
+            conv_33_size: (int) -- Output dimension of patt 2b ( conv 3 * 3 )
+            conv_55_reduce_size: (int) -- Output dimension of patt 3a ( conv 1 * 1 )
+            conv_55_size: (int) -- Output dimension of patt 3b ( conv 5 * 5 )
+            pool_conv_size: (int) -- Output dimension of patt 4b ( conv 1 * 1 )
+
+        Returns:
+            concat: (Tensor) -- Output tensor of inception layer
+
+        An inception layer consists of 4 individual parts and a Concatenation of them
 
                                 Concatenation
                             /     /     \     \
@@ -53,7 +66,7 @@ class GoogLeNet(object):
 
         # Part 4
         pool = tf.layers.max_pooling2d(inputs, [3, 3], stride=1)
-        conv_pool = tf.layers.conv2d(pool, pool_size, [1, 1])
+        conv_pool = tf.layers.conv2d(pool, pool_conv_size, [1, 1])
 
         # Concatenation
         return tf.concat([conv_11, conv_33, conv_55, conv_pool], 3)
