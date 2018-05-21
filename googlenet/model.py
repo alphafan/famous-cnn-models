@@ -9,8 +9,8 @@ class GoogLeNet(object):
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
 
     @staticmethod
-    def inception(inputs, conv11_size, conv33_11_size, conv33_size,
-                  conv55_11_size, conv55_size, pool11_size):
+    def inception(inputs, conv_11_size, conv_33_reduce_size, conv_33_size,
+                  conv_55_reduce_size, conv_55_size, pool_size):
         """
         An inception cell consists of 4 individual parts and a concat of them
 
@@ -40,18 +40,23 @@ class GoogLeNet(object):
             a) 3 * 3 Max Pooling
             b) 1 * 1 Convolutional
         """
-        conv11 = tf.layers.conv2d(inputs, conv11_size, [1, 1])
+        # Part 1
+        conv_11 = tf.layers.conv2d(inputs, conv_11_size, [1, 1])
 
-        conv33_11 = tf.layers.conv2d(inputs, conv33_11_size, [1, 1])
-        conv33 = tf.layers.conv2d(conv33_11, conv33_size, [3, 3])
+        # Part 2
+        conv_33_reduce = tf.layers.conv2d(inputs, conv_33_reduce_size, [1, 1])
+        conv_33 = tf.layers.conv2d(conv_33_reduce, conv_33_size, [3, 3])
 
-        conv55_11 = tf.layers.conv2d(inputs, conv55_11_size, [1, 1])
-        conv55 = tf.layers.conv2d(conv55_11, conv55_size, [5, 5])
+        # Part 3
+        conv_55_reduce = tf.layers.conv2d(inputs, conv_55_reduce_size, [1, 1])
+        conv_55 = tf.layers.conv2d(conv_55_reduce, conv_55_size, [5, 5])
 
-        pool33 = tf.layers.max_pooling2d(inputs, [3, 3], stride=1)
-        pool11 = tf.layers.conv2d(pool33, pool11_size, [1, 1])
+        # Part 4
+        pool = tf.layers.max_pooling2d(inputs, [3, 3], stride=1)
+        conv_pool = tf.layers.conv2d(pool, pool_size, [1, 1])
 
-        return tf.concat([conv11, conv33, conv55, pool11], 3)
+        # Concatenation
+        return tf.concat([conv_11, conv_33, conv_55, conv_pool], 3)
 
     def run(self):
         pass
