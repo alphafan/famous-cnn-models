@@ -72,4 +72,8 @@ class GoogLeNet(object):
         return tf.concat([conv_11, conv_33, conv_55, conv_pool], 3)
 
     def run(self):
+        # 1st Convolutional Layer
+        conv_1 = tf.layers.conv2d(self.X, filters=64, keenel_size=[7, 7], stride=2)
+        pool_1 = tf.layers.max_pooling2d(conv_1, pool_size=[3, 3])
+        norm_1 = tf.nn.local_response_normalization(pool_1, depth_radius=5.0, bias=2.0, alpha=1e-4, beta=0.75)
         pass
