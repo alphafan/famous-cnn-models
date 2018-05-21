@@ -15,20 +15,20 @@ class GoogLeNet(object):
 
         An inception layer consists of 4 individual parts and a Concatenation of them
 
-                       Concatenation                        - Part 1:
-                    /     /     \     \                         a) 1 * 1 Convolutional
+                       Concatenation                            - Part 1:
+                    /     /     \     \                             a) 1 * 1 Convolutional
                   /      /       \       \
-                /       /         \         \               - Part 2:
-        1 * 1 Conv  3 * 3 Conv  5 * 5 Conv  1 * 1 Conv          a) 1 * 1 Convolutional
-            |           |           |          |                b) 3 * 3 Convolutional
+                /       /         \         \                   - Part 2:
+        1 * 1 Conv  3 * 3 Conv  5 * 5 Conv  1 * 1 Conv              a) 1 * 1 Convolutional
+            |           |           |          |                    b) 3 * 3 Convolutional
              \          |           |          |
-              \     1 * 1 Conv  1 * 1 Conv  3 * 3 Pool      - Part 3:
-                \       |         /       /                     a) 1 * 1 Convolutional
-                  \     |      /      /                         b) 5 * 5 Convolutional
+              \     1 * 1 Conv  1 * 1 Conv  3 * 3 Pool          - Part 3:
+                \       |         /       /                         a) 1 * 1 Convolutional
+                  \     |      /      /                             b) 5 * 5 Convolutional
                     \   |    /     /
-                      \ |  /   /                            - Part 4:
-                        Inputs                                  a) 3 * 3 Max Pooling
-                                                                b) 1 * 1 Convolutional
+                      \ |  /   /                                - Part 4:
+                        Inputs                                      a) 3 * 3 Max Pooling
+                                                                    b) 1 * 1 Convolutional
 
         Args:
             inputs: (Tensor) -- Input tensor
