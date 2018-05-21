@@ -20,7 +20,7 @@ class GoogLeNet(object):
                         /       /         \         \
                 1 * 1 Conv  3 * 3 Conv  5 * 5 Conv  1 * 1 Conv
                     |           |           |          |
-                    \           |           |          |
+                     \          |           |          |
                       \     1 * 1 Conv  1 * 1 Conv  3 * 3 Pool
                         \       |         /       /
                           \     |      /      /
