@@ -72,13 +72,16 @@ class GoogLeNet(object):
         #   - b) Subsampling        Input 111 * 111 * 64 ,    Output  55 *  55 * 64
         #   - c) Normalization      Input  55 *  55 * 64 ,    Output  55 *  55 * 64
 
-        # 2nd Convolutional Layer:  Input  55 *  55 * 64 ,    Output 13 * 13 * 256
-        #   - a) Convolution a      Input  55 *  55 * 64 ,    Output 55 * 55 *  64
-        #   - b) Convolution b      Input  55 *  55 * 64 ,    Output 55 * 55 * 192
+        # 2nd Convolutional Layer:  Input  55 * 55 *  64 ,    Output 13 * 13 * 256
+        #   - a) Convolution a      Input  55 * 55 *  64 ,    Output 55 * 55 *  64
+        #   - b) Convolution b      Input  55 * 55 *  64 ,    Output 55 * 55 * 192
         #   - c) Normalization      Input  55 * 55 * 192 ,    Output 55 * 55 * 192
         #   - d) Subsampling        Input  55 * 55 * 192 ,    Output 26 * 26 * 192
 
-        # 3rd
+        # 3rd Inception Layer:      Input  26 * 26 * 192 ,    Output 26 * 26 * 480
+        #   - a) Inception a        Input  26 * 26 * 192 ,    Output 26 * 26 * 256
+        #   - b) Inception b        Input  26 * 26 * 256 ,    Output 26 * 26 * 480
+        #   - c) Subsampling        Input  26 * 26 * 480 ,    Output 12 * 12 * 480
         """
         # 1st Convolutional Layer
         conv_1 = tf.layers.conv2d(self.X, filters=64, kernel_size=[7, 7], strides=[2, 2])
@@ -86,20 +89,25 @@ class GoogLeNet(object):
         norm_1 = tf.nn.local_response_normalization(pool_1, depth_radius=2.0, bias=1.0, alpha=2e-4, beta=0.75)
 
         # 2nd Convolutional Layer
-        conv_2_a = tf.layers.conv2d(norm_1, filters=64, kernel_size=[1, 1])
-        conv_2_b = tf.layers.conv2d(conv_2_a, filters=192, kernel_size=[3, 3])
-        norm_2 = tf.nn.local_response_normalization(conv_2_b, depth_radius=2.0, bias=1.0, alpha=2e-4, beta=0.75)
+        conv_2a = tf.layers.conv2d(norm_1, filters=64, kernel_size=[1, 1])
+        conv_2b = tf.layers.conv2d(conv_2a, filters=192, kernel_size=[3, 3])
+        norm_2 = tf.nn.local_response_normalization(conv_2b, depth_radius=2.0, bias=1.0, alpha=2e-4, beta=0.75)
         pool_2 = tf.layers.max_pooling2d(norm_2, pool_size=[3, 3], strides=[2, 2])
 
         # 3rd Inception Layer
-        inception_3 = self.inception(pool_2, conv_11_size=64,
-                                     conv_33_reduce_size=96, conv_33_size=128,
-                                     conv_55_reduce_size=16, conv_55_size=32,
-                                     pool_conv_size=32)
+        inception_3a = self.inception(pool_2, conv_11_size=64,
+                                      conv_33_reduce_size=96, conv_33_size=128,
+                                      conv_55_reduce_size=16, conv_55_size=32,
+                                      pool_conv_size=32)
+        inception_3b = self.inception(inception_3a, conv_11_size=128,
+                                      conv_33_reduce_size=128, conv_33_size=192,
+                                      conv_55_reduce_size=32, conv_55_size=96,
+                                      pool_conv_size=64)
+        pool_3 = tf.layers.max_pooling2d(inception_3b, pool_size=[3, 3], strides=[2, 2])
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            shape = sess.run(tf.shape(inception_3), feed_dict={self.X: X_train[:1]})
+            shape = sess.run(tf.shape(pool_3), feed_dict={self.X: X_train[:1]})
             print(shape)
 
 
