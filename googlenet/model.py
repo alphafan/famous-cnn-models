@@ -10,7 +10,7 @@ class GoogLeNet(object):
 
     def __init__(self):
         # Input & output placeholders
-        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3), name='image')
+        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
 
     @staticmethod
@@ -48,19 +48,19 @@ class GoogLeNet(object):
             concat: (Tensor) -- Output tensor of inception layer
         """
         # Path 1
-        conv_11 = tf.layers.conv2d(inputs, conv_11_size, [1, 1])
+        conv_11 = tf.layers.conv2d(inputs, filters=conv_11_size, kernel_size=[1, 1], padding='same')
 
         # Path 2
-        conv_33_reduce = tf.layers.conv2d(inputs, conv_33_reduce_size, [1, 1])
-        conv_33 = tf.layers.conv2d(conv_33_reduce, conv_33_size, [3, 3])
+        conv_33_reduce = tf.layers.conv2d(inputs, filters=conv_33_reduce_size, kernel_size=[1, 1], padding='same')
+        conv_33 = tf.layers.conv2d(conv_33_reduce, filters=conv_33_size, kernel_size=[3, 3], padding='same')
 
         # Path 3
-        conv_55_reduce = tf.layers.conv2d(inputs, conv_55_reduce_size, [1, 1])
-        conv_55 = tf.layers.conv2d(conv_55_reduce, conv_55_size, [5, 5])
+        conv_55_reduce = tf.layers.conv2d(inputs, filters=conv_55_reduce_size, kernel_size=[1, 1], padding='same')
+        conv_55 = tf.layers.conv2d(conv_55_reduce, filters=conv_55_size, kernel_size=[5, 5], padding='same')
 
         # Path 4
-        pool = tf.layers.max_pooling2d(inputs, [3, 3], strides=1)
-        conv_pool = tf.layers.conv2d(pool, pool_conv_size, [1, 1])
+        pool = tf.layers.max_pooling2d(inputs, pool_size=[3, 3], strides=1, padding='same')
+        conv_pool = tf.layers.conv2d(pool, filters=pool_conv_size, kernel_size=[1, 1], padding='same')
 
         # Concatenation
         return tf.concat([conv_11, conv_33, conv_55, conv_pool], 3)
