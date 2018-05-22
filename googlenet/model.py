@@ -1,4 +1,5 @@
 import tensorflow as tf
+from datetime import datetime
 
 from utils.load_image_net_2 import (
     X_train, X_test, X_validation,
@@ -8,10 +9,14 @@ from utils.load_image_net_2 import (
 
 class GoogLeNet(object):
 
-    def __init__(self):
+    def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
+        # Training process related params
+        self.learning_rate = learning_rate
+        self.num_epochs = num_epochs
+        self.batch_size = batch_size
 
     @staticmethod
     def inception(inputs, conv_11_size, conv_33_reduce_size, conv_33_size,
@@ -175,6 +180,64 @@ class GoogLeNet(object):
         flat_5 = tf.layers.flatten(pool_5)
         drop_6 = tf.layers.dropout(flat_5, rate=0.4)
         linear = tf.layers.dense(drop_6, units=103)
+
+        ##########################################################################
+        # Backward propagation
+        ##########################################################################
+
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=linear)
+        loss = tf.reduce_mean(cross_entropy)
+        optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        train = optimizer.minimize(loss)
+
+        ##########################################################################
+        # Compute accuracy
+        ##########################################################################
+
+        corrects = tf.equal(tf.round(linear), tf.round(self.y))
+        accuracy = tf.reduce_mean(tf.cast(corrects, tf.float32))
+
+        ##########################################################################
+        # Train the network
+        ##########################################################################
+
+        sess = tf.Session()
+
+        sess.run(tf.global_variables_initializer())
+
+        print()
+        print(datetime.now(), 'Training GoogLeNet model')
+
+        for i in range(self.num_epochs):
+            for start in range(0, len(X_train), self.batch_size):
+                end = start + self.batch_size
+                batch_X, batch_y = X_train[start:end], y_train[start:end]
+                sess.run(train, feed_dict={
+                    self.X: batch_X, self.y: batch_y})
+                if end % 100 == 0:
+                    print('{} Training Epoch {} {}/{}'.format(datetime.now(), i, end, len(X_train)))
+
+            # Show loss on validation dataset when finishing each epoch
+            print('\n{} Training Epoch: {} Loss: {} Accuracy: {}\n'.format(
+                datetime.now(), i,
+                *sess.run(
+                    (loss, accuracy),
+                    feed_dict={self.X: X_validation, self.y: y_validation}))
+            )
+
+        ##########################################################################
+        # Compute accuracy on test set
+        ##########################################################################
+
+        # Evaluate on test set
+        print(datetime.now(), 'Evaluating GoogLeNet model on test set')
+        print('\n{} Test Result: Loss: {} Accuracy: {}\n'.format(
+            datetime.now(), *sess.run(
+                (loss, accuracy),
+                feed_dict={self.X: X_test, self.y: y_test}))
+        )
+
+        sess.close()
 
 
 if __name__ == '__main__':
