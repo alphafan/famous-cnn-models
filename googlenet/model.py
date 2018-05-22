@@ -15,7 +15,7 @@ class GoogLeNet(object):
 
     @staticmethod
     def inception(inputs, conv_11_size, conv_33_reduce_size, conv_33_size,
-                  conv_56_reduce_size, conv_56_size, pool_conv_size):
+                  conv_56_reduce_size, conv_56_size, pool_proj_size):
         """ Apply inception processing to input tensor.
 
         An inception layer consists of 4 individual parts and a final concatenation of them
@@ -42,7 +42,7 @@ class GoogLeNet(object):
             conv_33_size: (int) -- Output dimension of Path 2b ( conv 3 * 3 )
             conv_56_reduce_size: (int) -- Output dimension of Path 3a ( conv 1 * 1 )
             conv_56_size: (int) -- Output dimension of Path 3b ( conv 5 * 5 )
-            pool_conv_size: (int) -- Output dimension of Path 4b ( conv 1 * 1 )
+            pool_proj_size: (int) -- Output dimension of Path 4b ( conv 1 * 1 )
 
         Returns:
             concat: (Tensor) -- Output tensor of inception layer
@@ -60,10 +60,20 @@ class GoogLeNet(object):
 
         # Path 4
         pool = tf.layers.max_pooling2d(inputs, pool_size=[3, 3], strides=1, padding='same')
-        conv_pool = tf.layers.conv2d(pool, filters=pool_conv_size, kernel_size=[1, 1], padding='same')
+        conv_pool = tf.layers.conv2d(pool, filters=pool_proj_size, kernel_size=[1, 1], padding='same')
 
         # Concatenation
         return tf.concat([conv_11, conv_33, conv_56, conv_pool], 3)
+
+    @staticmethod
+    def auxiliary(inputs):
+        """ Auxiliary classifier layer of GoogLeNet """
+        pool = tf.layers.average_pooling2d(inputs, [5, 5], strides=3, padding='same')
+        conv = tf.layers.conv2d(pool, filters=128, kernel_size=[1, 1])
+        flat = tf.layers.flatten(conv)
+        full = tf.layers.dense(flat, units=1024)
+        drop = tf.layers.dropout(full, 0.3)
+        return tf.layers.dense(drop, 103, activation=None)
 
     def run(self):
         """
@@ -98,11 +108,11 @@ class GoogLeNet(object):
         inception_3a = self.inception(pool_2, conv_11_size=64,
                                       conv_33_reduce_size=96, conv_33_size=128,
                                       conv_56_reduce_size=16, conv_56_size=32,
-                                      pool_conv_size=32)
+                                      pool_proj_size=32)
         inception_3b = self.inception(inception_3a, conv_11_size=128,
                                       conv_33_reduce_size=128, conv_33_size=192,
                                       conv_56_reduce_size=32, conv_56_size=96,
-                                      pool_conv_size=64)
+                                      pool_proj_size=64)
         pool_3 = tf.layers.max_pooling2d(inception_3b, pool_size=[3, 3], strides=[2, 2], padding='same')
 
         # 4th Inception Layer
