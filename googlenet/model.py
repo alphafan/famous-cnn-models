@@ -77,7 +77,6 @@ class GoogLeNet(object):
                      |        \                             (auxiliary part)                     |
                      |         \                                                                 |
                      |        pool - conv - flatten - dense(dropout) - dense - softmax logits    |
-                     |                                                                           |
                      + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
         """
         pool = tf.layers.average_pooling2d(inputs, [5, 5], strides=3, padding='same')
