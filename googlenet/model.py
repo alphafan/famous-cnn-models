@@ -69,10 +69,9 @@ class GoogLeNet(object):
     def auxiliary(inputs):
         """ Auxiliary classifier layer of GoogLeNet
 
-
                                    GoogLeNet Continues ...
                                  /
-        ... -> Output of Inception
+        ... -> Output of Inception Layer
                             \
                      + - - - \ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
                      |        \                             (auxiliary part)                     |
