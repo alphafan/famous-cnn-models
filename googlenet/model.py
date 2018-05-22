@@ -67,7 +67,20 @@ class GoogLeNet(object):
 
     @staticmethod
     def auxiliary(inputs):
-        """ Auxiliary classifier layer of GoogLeNet """
+        """ Auxiliary classifier layer of GoogLeNet
+
+
+                                   GoogLeNet Continues ...
+                                 /
+        ... -> Output of Inception
+                            \
+                     + - - - \ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+                     |        \                             (auxiliary part)                     |
+                     |         \                                                                 |
+                     |        pool - conv - flatten - dense(dropout) - dense - softmax logits    |
+                     |                                                                           |
+                     + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+        """
         pool = tf.layers.average_pooling2d(inputs, [5, 5], strides=3, padding='same')
         conv = tf.layers.conv2d(pool, filters=128, kernel_size=[1, 1])
         flat = tf.layers.flatten(conv)
