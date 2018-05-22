@@ -1,5 +1,10 @@
 import tensorflow as tf
 
+from utils.load_image_net_224x224x3 import (
+    X_train, X_test, X_validation,
+    y_train, y_test, y_validation
+)
+
 
 class VGG19(object):
 
@@ -39,6 +44,9 @@ class VGG19(object):
         conv5_3 = tf.layers.conv2d(conv5_2, 512, [3, 3], [2, 2], 'same', activation=tf.nn.relu)
         conv5_4 = tf.layers.conv2d(conv5_3, 512, [3, 3], [2, 2], 'same', activation=tf.nn.relu)
         pool5 = tf.layers.max_pooling2d(conv5_4, [2, 2], [2, 2], 'same')
-        # Full connected
-        pass
+        # Block 6
+        flat6 = tf.layers.flatten(pool5)
+
+        with tf.Session() as sess:
+            pass
 
