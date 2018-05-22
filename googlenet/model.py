@@ -110,9 +110,17 @@ class GoogLeNet(object):
         #   - c) Inception c        Input  14 * 14 * 512 ,    Output 14 * 14 * 512
         #   - d) Inception d        Input  14 * 14 * 512 ,    Output 14 * 14 * 528
         #   - e) Inception e        Input  14 * 14 * 528 ,    Output 14 * 14 * 832
+        #   - f) Max Pooling        Input  14 * 14 * 832 ,    Output  7 *  7 * 832
+
         # 4.2 Auxiliary Layer:      Input  14 * 14 * 480 ,    Output 14 * 14 * 832
         #   - 4a -> auxiliary_1     Input  14 * 14 * 512 ,    Output 103
         #   - 4d -> auxiliary_2     Input  14 * 14 * 528 ,    Output 103
+
+        # 5th Inception Layer:      Input   7 *  7 * 832 ,    Output 1 * 1 * 1024
+        #   - a) Inception a        Input   7 *  7 * 832 ,    Output 7 * 7 *  832
+        #   - b) Inception b        Input   7 *  7 * 832 ,    Output 7 * 7 * 1024
+        #   - c) Max Pooling        Input   7 *  7 * 1024,    Output 1 * 1 * 1024
+        #   - d) Flatten            Input   1 *  1 * 1024,    Output 1024
         """
         # 1st Convolutional Layer
         conv_1 = tf.layers.conv2d(self.X, filters=64, kernel_size=[7, 7], strides=[2, 2], padding='same')
@@ -142,13 +150,20 @@ class GoogLeNet(object):
         inception_4c = self.inception(inception_4b, 128, 128, 256, 24, 64, 64)
         inception_4d = self.inception(inception_4c, 112, 144, 288, 32, 64, 64)
         inception_4e = self.inception(inception_4d, 256, 160, 320, 32, 128, 128)
+        pool_4 = tf.layers.max_pooling2d(inception_4e, pool_size=[3, 3], strides=[2, 2], padding='same')
         # 4.2 Auxiliary Layer
         auxiliary_1 = self.auxiliary(inception_4a)
         auxiliary_2 = self.auxiliary(inception_4d)
 
+        # 5th Inception Layer
+        inception_5a = self.inception(pool_4, 256, 160, 320, 32, 128, 128)
+        inception_5b = self.inception(inception_5a, 384, 192, 384, 48, 128, 128)
+        pool_5 = tf.layers.average_pooling2d(inception_5b, pool_size=[7, 7], strides=[1, 1])
+        flat_5 = tf.layers.flatten(pool_5)
+
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            shape = sess.run(tf.shape(inception_4e), feed_dict={self.X: X_train[:1]})
+            shape = sess.run(tf.shape(flat_5), feed_dict={self.X: X_train[:1]})
             print(shape)
 
 
