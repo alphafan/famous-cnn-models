@@ -46,6 +46,9 @@ class VGG19(object):
         pool5 = tf.layers.max_pooling2d(conv5_4, [2, 2], [2, 2], 'same')
         # Block 6
         flat6 = tf.layers.flatten(pool5)
+        full6_1 = tf.layers.dense(flat6, 4096, activation=tf.nn.relu)
+        full6_2 = tf.layers.dense(full6_1, 4096, activation=tf.nn.relu)
+        full6_3 = tf.layers.dense(full6_2, 103)
 
         with tf.Session() as sess:
             pass
