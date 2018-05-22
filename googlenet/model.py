@@ -88,6 +88,8 @@ class GoogLeNet(object):
 
     def run(self):
         """
+        Run forward/backward propagation on GoogLeNet (Inception-v1)
+
         # 1st Convolutional Layer:  Input 224 * 224 *  3 ,    Output  56 *  56 * 64
         #   - a) Convolution        Input 224 * 224 *  3 ,    Output 114 * 114 * 64
         #   - b) Subsampling        Input 114 * 114 * 64 ,    Output  56 *  56 * 64
@@ -119,9 +121,18 @@ class GoogLeNet(object):
         # 5th Inception Layer:      Input   7 *  7 * 832 ,    Output 1 * 1 * 1024
         #   - a) Inception a        Input   7 *  7 * 832 ,    Output 7 * 7 *  832
         #   - b) Inception b        Input   7 *  7 * 832 ,    Output 7 * 7 * 1024
-        #   - c) Max Pooling        Input   7 *  7 * 1024,    Output 1 * 1 * 1024
-        #   - d) Flatten            Input   1 *  1 * 1024,    Output 1024
+        #   - c) Avg Pooling        Input   7 *  7 * 1024,    Output 1 * 1 * 1024
+
+        # 6th Full Connect Layer:   Input   1 *  1 * 1024,    Output  103
+        #   - a) Flatten            Input   1 *  1 * 1024,    Output 1024
+        #   - b) Dropout            Input            1024,    Output 1024
+        #   - c) Dense              Input            1024,    Output 1024
         """
+
+        ##########################################################################
+        # Forward propagation
+        ##########################################################################
+
         # 1st Convolutional Layer
         conv_1 = tf.layers.conv2d(self.X, filters=64, kernel_size=[7, 7], strides=[2, 2], padding='same')
         pool_1 = tf.layers.max_pooling2d(conv_1, pool_size=[3, 3], strides=[2, 2], padding='same')
@@ -159,12 +170,11 @@ class GoogLeNet(object):
         inception_5a = self.inception(pool_4, 256, 160, 320, 32, 128, 128)
         inception_5b = self.inception(inception_5a, 384, 192, 384, 48, 128, 128)
         pool_5 = tf.layers.average_pooling2d(inception_5b, pool_size=[7, 7], strides=[1, 1])
-        flat_5 = tf.layers.flatten(pool_5)
 
-        with tf.Session() as sess:
-            sess.run(tf.global_variables_initializer())
-            shape = sess.run(tf.shape(flat_5), feed_dict={self.X: X_train[:1]})
-            print(shape)
+        # 6th Full Connected Layer
+        flat_5 = tf.layers.flatten(pool_5)
+        drop_6 = tf.layers.dropout(flat_5, rate=0.4)
+        linear = tf.layers.dense(drop_6, units=103)
 
 
 if __name__ == '__main__':

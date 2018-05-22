@@ -84,8 +84,6 @@ class AlexNet(object):
         # Forward propagation
         ##########################################################################
 
-        # img = tf.reshape(self.X, [-1, 227, 227, 3])
-
         # 1st convolutional layer
         conv1 = tf.nn.conv2d(self.X, self.weights["wc1"], strides=[1, 4, 4, 1], padding="SAME", name="conv1")
         conv1 = tf.nn.bias_add(conv1, self.biases["bc1"])
