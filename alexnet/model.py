@@ -1,6 +1,6 @@
 from datetime import datetime
 import tensorflow as tf
-from utils.load_image_net import (
+from utils.load_image_net_227x227x3 import (
     X_train, X_test, X_validation,
     y_train, y_test, y_validation
 )
