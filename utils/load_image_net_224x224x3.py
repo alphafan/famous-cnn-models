@@ -48,7 +48,7 @@ image_net_image_dir = os.path.join(image_net_dir, 'images')
 # Pickle files
 image_net_wid_2_url = os.path.join(image_net_dir, 'wid_2_url.p')
 image_net_wid_2_types = os.path.join(image_net_dir, 'wid_2_types.p')
-image_net_pickle_dir = os.path.join(image_net_image_dir, 'pickle_224x224x3')
+image_net_pickle_dir = os.path.join(image_net_dir, 'pickle_224x224x3')
 image_net_images = os.path.join(image_net_pickle_dir, 'images.p')
 image_net_labels = os.path.join(image_net_pickle_dir, 'labels.p')
 images_net_train_images = os.path.join(image_net_pickle_dir, 'train_images.p')

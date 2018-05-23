@@ -11,7 +11,7 @@ class VGG19(object):
     def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
         self.num_classes = np.shape(y_train)[1]
         # Input & output placeholders
-        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
+        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3), name='image')
         self.y = tf.placeholder(dtype=tf.float32, shape=(None, self.num_classes), name='label')
         # Training process related params
         self.learning_rate = learning_rate
