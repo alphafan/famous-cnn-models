@@ -41,27 +41,30 @@ word_url = 'http://image-net.org/archive/words.txt'
 
 
 # Data directory to save images of ImageNet
-image_net_dir = os.path.join(str(Path(__file__).absolute().parent.parent), 'imageNet2')
+image_net_dir = os.path.join(str(Path(__file__).absolute().parent.parent), 'imageNet')
 image_net_urls_file = os.path.join(image_net_dir, 'imagenet_fall11_urls.tgz')
 image_net_word_file = os.path.join(image_net_dir, 'word.txt')
 image_net_image_dir = os.path.join(image_net_dir, 'images')
 # Pickle files
 image_net_wid_2_url = os.path.join(image_net_dir, 'wid_2_url.p')
 image_net_wid_2_types = os.path.join(image_net_dir, 'wid_2_types.p')
-image_net_images = os.path.join(image_net_dir, 'images.p')
-image_net_labels = os.path.join(image_net_dir, 'labels.p')
-images_net_train_images = os.path.join(image_net_dir, 'train_images.p')
-images_net_train_labels = os.path.join(image_net_dir, 'train_labels.p')
-images_net_test_images = os.path.join(image_net_dir, 'test_images.p')
-images_net_test_labels = os.path.join(image_net_dir, 'test_labels.p')
-images_net_validation_images = os.path.join(image_net_dir, 'validation_images.p')
-images_net_validation_labels = os.path.join(image_net_dir, 'validation_labels.p')
+image_net_pickle_dir = os.path.join(image_net_image_dir, 'pickle_224x224x3')
+image_net_images = os.path.join(image_net_pickle_dir, 'images.p')
+image_net_labels = os.path.join(image_net_pickle_dir, 'labels.p')
+images_net_train_images = os.path.join(image_net_pickle_dir, 'train_images.p')
+images_net_train_labels = os.path.join(image_net_pickle_dir, 'train_labels.p')
+images_net_test_images = os.path.join(image_net_pickle_dir, 'test_images.p')
+images_net_test_labels = os.path.join(image_net_pickle_dir, 'test_labels.p')
+images_net_validation_images = os.path.join(image_net_pickle_dir, 'validation_images.p')
+images_net_validation_labels = os.path.join(image_net_pickle_dir, 'validation_labels.p')
 
 # Create these two repository if not exists
 if not os.path.exists(image_net_dir):
     os.makedirs(image_net_dir)
 if not os.path.exists(image_net_image_dir):
     os.makedirs(image_net_image_dir)
+if not os.path.exists(image_net_pickle_dir):
+    os.makedirs(image_net_pickle_dir)
 
 
 ##########################################################################
