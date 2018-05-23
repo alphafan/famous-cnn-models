@@ -1,5 +1,6 @@
 import tensorflow as tf
 from datetime import datetime
+import numpy as np
 
 from utils.load_image_net_224x224x3 import (
     X_train, X_test, X_validation,
@@ -10,9 +11,10 @@ from utils.load_image_net_224x224x3 import (
 class GoogLeNet(object):
 
     def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
+        self.num_classes = np.shape(y_train)[1]
         # Input & output placeholders
-        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3), name='image')
-        self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
+        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
+        self.y = tf.placeholder(dtype=tf.float32, shape=(None, self.num_classes), name='label')
         # Training process related params
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
@@ -70,8 +72,7 @@ class GoogLeNet(object):
         # Concatenation
         return tf.concat([conv_11, conv_33, conv_56, conv_pool], 3)
 
-    @staticmethod
-    def auxiliary(inputs):
+    def auxiliary(self, inputs):
         """ Auxiliary classifier layer of GoogLeNet
 
                                    GoogLeNet Continues ...
@@ -89,7 +90,7 @@ class GoogLeNet(object):
         flat = tf.layers.flatten(conv)
         full = tf.layers.dense(flat, units=1024)
         drop = tf.layers.dropout(full, 0.3)
-        return tf.layers.dense(drop, 103, activation=None)
+        return tf.layers.dense(drop, self.num_classes, activation=None)
 
     def run(self):
         """
@@ -120,15 +121,15 @@ class GoogLeNet(object):
         #   - f) Max Pooling        Input  14 * 14 * 832 ,    Output  7 *  7 * 832
 
         # 4.2 Auxiliary Layer:      Input  14 * 14 * 480 ,    Output 14 * 14 * 832
-        #   - 4a -> auxiliary_1     Input  14 * 14 * 512 ,    Output 103
-        #   - 4d -> auxiliary_2     Input  14 * 14 * 528 ,    Output 103
+        #   - 4a -> auxiliary_1     Input  14 * 14 * 512 ,    Output self.num_classes
+        #   - 4d -> auxiliary_2     Input  14 * 14 * 528 ,    Output self.num_classes
 
         # 5th Inception Layer:      Input   7 *  7 * 832 ,    Output 1 * 1 * 1024
         #   - a) Inception a        Input   7 *  7 * 832 ,    Output 7 * 7 *  832
         #   - b) Inception b        Input   7 *  7 * 832 ,    Output 7 * 7 * 1024
         #   - c) Avg Pooling        Input   7 *  7 * 1024,    Output 1 * 1 * 1024
 
-        # 6th Full Connect Layer:   Input   1 *  1 * 1024,    Output  103
+        # 6th Full Connect Layer:   Input   1 *  1 * 1024,    Output  self.num_classes
         #   - a) Flatten            Input   1 *  1 * 1024,    Output 1024
         #   - b) Dropout            Input            1024,    Output 1024
         #   - c) Dense              Input            1024,    Output 1024
@@ -179,7 +180,7 @@ class GoogLeNet(object):
         # 6th Full Connected Layer
         flat_5 = tf.layers.flatten(pool_5)
         drop_6 = tf.layers.dropout(flat_5, rate=0.4)
-        linear = tf.layers.dense(drop_6, units=103)
+        linear = tf.layers.dense(drop_6, units=self.num_classes)
 
         ##########################################################################
         # Backward propagation

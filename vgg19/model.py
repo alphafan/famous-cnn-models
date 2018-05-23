@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+import numpy as np
 from utils.load_image_net_224x224x3 import (
     X_train, X_test, X_validation,
     y_train, y_test, y_validation
@@ -9,9 +9,10 @@ from utils.load_image_net_224x224x3 import (
 class VGG19(object):
 
     def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
+        self.num_classes = np.shape(y_train)[1]
         # Input & output placeholders
-        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 224, 224, 3), name='image')
-        self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
+        self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
+        self.y = tf.placeholder(dtype=tf.float32, shape=(None, self.num_classes), name='label')
         # Training process related params
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
@@ -48,7 +49,7 @@ class VGG19(object):
         flat6 = tf.layers.flatten(pool5)
         full6_1 = tf.layers.dense(flat6, 4096, activation=tf.nn.relu)
         full6_2 = tf.layers.dense(full6_1, 4096, activation=tf.nn.relu)
-        full6_3 = tf.layers.dense(full6_2, 103)
+        full6_3 = tf.layers.dense(full6_2, self.num_classes)
 
         with tf.Session() as sess:
             pass

@@ -1,4 +1,5 @@
 from datetime import datetime
+import numpy as np
 import tensorflow as tf
 from utils.load_image_net_227x227x3 import (
     X_train, X_test, X_validation,
@@ -9,9 +10,10 @@ from utils.load_image_net_227x227x3 import (
 class AlexNet(object):
 
     def __init__(self, learning_rate=0.001, num_epochs=10, batch_size=100):
+        self.num_classes = np.shape(y_train)[1]
         # Input & output placeholders
         self.X = tf.placeholder(dtype=tf.float32, shape=(None, 227, 227, 3), name='image')
-        self.y = tf.placeholder(dtype=tf.float32, shape=(None, 103), name='label')
+        self.y = tf.placeholder(dtype=tf.float32, shape=(None, self.num_classes), name='label')
 
         # Weight parameters as devised in the original research paper
         self.weights = {
@@ -22,7 +24,7 @@ class AlexNet(object):
             "wc5": tf.Variable(tf.truncated_normal([3, 3, 384, 256], stddev=0.01), name="wc5"),
             "wf1": tf.Variable(tf.truncated_normal([9216, 4096], stddev=0.01), name="wf1"),
             "wf2": tf.Variable(tf.truncated_normal([4096, 4096], stddev=0.01), name="wf2"),
-            "wf3": tf.Variable(tf.truncated_normal([4096, 103], stddev=0.01), name="wf3")
+            "wf3": tf.Variable(tf.truncated_normal([4096, self.num_classes], stddev=0.01), name="wf3")
         }
 
         # Bias parameters as devised in the original research paper
@@ -34,7 +36,7 @@ class AlexNet(object):
             "bc5": tf.Variable(tf.constant(1.0, shape=[256]), name="bc5"),
             "bf1": tf.Variable(tf.constant(1.0, shape=[4096]), name="bf1"),
             "bf2": tf.Variable(tf.constant(1.0, shape=[4096]), name="bf2"),
-            "bf3": tf.Variable(tf.constant(1.0, shape=[103]), name="bf3")
+            "bf3": tf.Variable(tf.constant(1.0, shape=[self.num_classes]), name="bf3")
         }
 
         # fully connected layer
@@ -77,7 +79,7 @@ class AlexNet(object):
         #   - a) Full Connected     Input 4906           ,    Output 4906
         #   - b) Dropout            Input 4906           ,    Output 4906
 
-        # 3rd fully connected layer Input 4906           ,    Output 103
+        # 3rd fully connected layer Input 4906           ,    Output self.num_classes
         """
 
         ##########################################################################
