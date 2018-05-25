@@ -1,4 +1,5 @@
 import tensorflow as tf
+from datetime import datetime
 import numpy as np
 from utils.load_image_net_224x224x3 import (
     X_train, X_test, X_validation,
@@ -51,6 +52,65 @@ class VGG19(object):
         full6_2 = tf.layers.dense(full6_1, 4096, activation=tf.nn.relu)
         full6_3 = tf.layers.dense(full6_2, self.num_classes)
 
-        with tf.Session() as sess:
-            pass
+        ##########################################################################
+        # Backward propagation
+        ##########################################################################
 
+        cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=self.y, logits=full6_3)
+        loss = tf.reduce_mean(cross_entropy)
+        optimizer = tf.train.AdamOptimizer(self.learning_rate)
+        train = optimizer.minimize(loss)
+
+        ##########################################################################
+        # Compute accuracy
+        ##########################################################################
+
+        corrects = tf.equal(tf.round(full6_3), tf.round(self.y))
+        accuracy = tf.reduce_mean(tf.cast(corrects, tf.float32))
+
+        ##########################################################################
+        # Train the network
+        ##########################################################################
+
+        sess = tf.Session()
+
+        sess.run(tf.global_variables_initializer())
+
+        print()
+        print(datetime.now(), 'Training GoogLeNet model')
+
+        for i in range(self.num_epochs):
+            for start in range(0, len(X_train), self.batch_size):
+                end = start + self.batch_size
+                batch_X, batch_y = X_train[start:end], y_train[start:end]
+                sess.run(train, feed_dict={
+                    self.X: batch_X, self.y: batch_y})
+                if end % 100 == 0:
+                    print('{} Training Epoch {} {}/{}'.format(datetime.now(), i, end, len(X_train)))
+
+            # Show loss on validation dataset when finishing each epoch
+            print('\n{} Training Epoch: {} Loss: {} Accuracy: {}\n'.format(
+                datetime.now(), i,
+                *sess.run(
+                    (loss, accuracy),
+                    feed_dict={self.X: X_validation, self.y: y_validation}))
+            )
+
+        ##########################################################################
+        # Compute accuracy on test set
+        ##########################################################################
+
+        # Evaluate on test set
+        print(datetime.now(), 'Evaluating GoogLeNet model on test set')
+        print('\n{} Test Result: Loss: {} Accuracy: {}\n'.format(
+            datetime.now(), *sess.run(
+                (loss, accuracy),
+                feed_dict={self.X: X_test, self.y: y_test}))
+        )
+
+        sess.close()
+
+
+if __name__ == '__main__':
+    net = VGG19()
+    net.run()
