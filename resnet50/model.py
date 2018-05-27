@@ -86,6 +86,7 @@ def max_pool(x, pool_size, stride, scope):
 
 
 class ResNet50(object):
+
     def __init__(self, inputs, num_classes=1000, is_training=True,
                  scope="resnet50"):
         self.inputs = inputs
